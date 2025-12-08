@@ -19,12 +19,14 @@ import "react-native-url-polyfill/auto";
 const NUM_RUNS = 100;
 const TEST_TIMEOUT = 60000; // 60 seconds for integration tests
 
-// Check if Supabase is configured
+// Check if Supabase is configured with real values (not test placeholders)
 const isSupabaseConfigured =
   process.env.EXPO_PUBLIC_SUPABASE_URL &&
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY &&
   !process.env.EXPO_PUBLIC_SUPABASE_URL.includes("your_") &&
-  !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY.includes("your_");
+  !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY.includes("your_") &&
+  !process.env.EXPO_PUBLIC_SUPABASE_URL.includes("test.supabase.co") &&
+  !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY.includes("test-anon-key");
 
 // Create Supabase client only if configured
 let supabase: SupabaseClient | null = null;

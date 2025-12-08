@@ -1,0 +1,472 @@
+import { supabase } from "@/utils/supabaseClient";
+import {
+  JournalEntry,
+  TextEntry,
+  VideoEntry,
+  EntryType,
+  AnalysisStatus,
+} from "@/types/entry.types";
+import { AppError, ErrorCode } from "@/types/error.types";
+import { withRetry } from "@/utils/retry";
+
+/**
+ * Entry service interface
+ */
+export interface IEntryService {
+  createTextEntry(content: string): Promise<TextEntry>;
+  createVideoEntry(videoBlob: Blob): Promise<VideoEntry>;
+  getEntries(): Promise<JournalEntry[]>;
+  getEntryById(id: string): Promise<JournalEntry>;
+  deleteEntry(id: string): Promise<void>;
+}
+
+/**
+ * Validates text entry content is not empty
+ */
+function validateTextContent(content: string): void {
+  if (!content || content.trim().length === 0) {
+    throw {
+      code: ErrorCode.ENTRY_EMPTY_CONTENT,
+      message: "Entry content cannot be empty",
+      retryable: false,
+    } as AppError;
+  }
+}
+
+/**
+ * Maps database error to application error
+ */
+function mapDatabaseError(error: any): AppError {
+  const message = error.message?.toLowerCase() || "";
+
+  // Check for network/timeout errors
+  if (
+    message.includes("timeout") ||
+    message.includes("timed out") ||
+    error.code === "ETIMEDOUT"
+  ) {
+    return {
+      code: ErrorCode.NETWORK_TIMEOUT,
+      message: "Request timed out. Please try again",
+      details: error,
+      retryable: true,
+    };
+  }
+
+  // Check for offline/connection errors
+  if (
+    message.includes("network") ||
+    message.includes("connection") ||
+    message.includes("offline") ||
+    error.code === "ENOTFOUND" ||
+    error.code === "ECONNREFUSED"
+  ) {
+    return {
+      code: ErrorCode.NETWORK_OFFLINE,
+      message: "No internet connection. Please check your network",
+      details: error,
+      retryable: true,
+    };
+  }
+
+  // Check for not found errors
+  if (message.includes("not found") || error.code === "PGRST116") {
+    return {
+      code: ErrorCode.ENTRY_NOT_FOUND,
+      message: "Entry not found",
+      details: error,
+      retryable: false,
+    };
+  }
+
+  // Check for unauthorized/RLS errors
+  if (
+    message.includes("permission") ||
+    message.includes("unauthorized") ||
+    message.includes("row-level security") ||
+    error.code === "42501"
+  ) {
+    return {
+      code: ErrorCode.ENTRY_UNAUTHORIZED,
+      message: "You do not have permission to access this entry",
+      details: error,
+      retryable: false,
+    };
+  }
+
+  // Default server error
+  return {
+    code: ErrorCode.NETWORK_SERVER_ERROR,
+    message: error.message || "An error occurred while accessing the database",
+    details: error,
+    retryable: true,
+  };
+}
+
+/**
+ * Converts database row to TextEntry
+ */
+function toTextEntry(row: any): TextEntry {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: EntryType.TEXT,
+    content: row.content,
+    moodMetadata: row.mood_metadata,
+    analysisStatus: row.analysis_status as AnalysisStatus,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Converts database row to VideoEntry
+ */
+function toVideoEntry(row: any): VideoEntry {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: EntryType.VIDEO,
+    videoUrl: row.video_url,
+    thumbnailUrl: row.thumbnail_url,
+    duration: row.duration,
+    humeEmotionData: row.hume_emotion_data,
+    analysisStatus: row.analysis_status as AnalysisStatus,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Converts database row to JournalEntry (text or video)
+ */
+function toJournalEntry(row: any): JournalEntry {
+  if (row.entry_type === EntryType.TEXT) {
+    return toTextEntry(row);
+  } else {
+    return toVideoEntry(row);
+  }
+}
+
+/**
+ * Entry service implementation
+ */
+class EntryService implements IEntryService {
+  /**
+   * Create a new text journal entry
+   */
+  async createTextEntry(content: string): Promise<TextEntry> {
+    // Validate content
+    validateTextContent(content);
+
+    try {
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to create an entry",
+          retryable: false,
+        } as AppError;
+      }
+
+      // Create entry with retry logic for network errors
+      const result = await withRetry(async () => {
+        const { data, error } = await supabase
+          .from("journal_entries")
+          .insert({
+            user_id: user.id,
+            entry_type: EntryType.TEXT,
+            content: content,
+            analysis_status: AnalysisStatus.PENDING,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+
+        if (!data) {
+          throw {
+            code: ErrorCode.NETWORK_SERVER_ERROR,
+            message: "Failed to create entry",
+            retryable: true,
+          } as AppError;
+        }
+
+        return data;
+      });
+
+      return toTextEntry(result);
+    } catch (error) {
+      // If it's already an AppError, rethrow it
+      if ((error as AppError).code) {
+        throw error;
+      }
+
+      // Otherwise, wrap it
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while creating the entry",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+
+  /**
+   * Create a new video journal entry
+   */
+  async createVideoEntry(videoBlob: Blob): Promise<VideoEntry> {
+    try {
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to create an entry",
+          retryable: false,
+        } as AppError;
+      }
+
+      // Upload video to Supabase Storage with retry
+      const fileName = `${user.id}/${Date.now()}.mp4`;
+      const uploadResult = await withRetry(async () => {
+        const { data, error } = await supabase.storage
+          .from("videos")
+          .upload(fileName, videoBlob, {
+            contentType: "video/mp4",
+          });
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+
+        return data;
+      });
+
+      // Get public URL for the video
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("videos").getPublicUrl(uploadResult.path);
+
+      // Generate thumbnail URL (placeholder for now)
+      const thumbnailUrl = publicUrl.replace(".mp4", "_thumb.jpg");
+
+      // Create entry with retry logic
+      const result = await withRetry(async () => {
+        const { data, error } = await supabase
+          .from("journal_entries")
+          .insert({
+            user_id: user.id,
+            entry_type: EntryType.VIDEO,
+            video_url: publicUrl,
+            thumbnail_url: thumbnailUrl,
+            duration: 0, // Will be updated after video processing
+            analysis_status: AnalysisStatus.PENDING,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+
+        if (!data) {
+          throw {
+            code: ErrorCode.NETWORK_SERVER_ERROR,
+            message: "Failed to create entry",
+            retryable: true,
+          } as AppError;
+        }
+
+        return data;
+      });
+
+      return toVideoEntry(result);
+    } catch (error) {
+      // If it's already an AppError, rethrow it
+      if ((error as AppError).code) {
+        throw error;
+      }
+
+      // Otherwise, wrap it
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while creating the video entry",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+
+  /**
+   * Get all journal entries for the current user
+   */
+  async getEntries(): Promise<JournalEntry[]> {
+    try {
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to view entries",
+          retryable: false,
+        } as AppError;
+      }
+
+      // Fetch entries with retry logic
+      const result = await withRetry(async () => {
+        const { data, error } = await supabase
+          .from("journal_entries")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+
+        return data || [];
+      });
+
+      return result.map(toJournalEntry);
+    } catch (error) {
+      // If it's already an AppError, rethrow it
+      if ((error as AppError).code) {
+        throw error;
+      }
+
+      // Otherwise, wrap it
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while fetching entries",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+
+  /**
+   * Get a specific journal entry by ID
+   */
+  async getEntryById(id: string): Promise<JournalEntry> {
+    try {
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to view entries",
+          retryable: false,
+        } as AppError;
+      }
+
+      // Fetch entry with retry logic
+      const result = await withRetry(async () => {
+        const { data, error } = await supabase
+          .from("journal_entries")
+          .select("*")
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+
+        if (!data) {
+          throw {
+            code: ErrorCode.ENTRY_NOT_FOUND,
+            message: "Entry not found",
+            retryable: false,
+          } as AppError;
+        }
+
+        return data;
+      });
+
+      return toJournalEntry(result);
+    } catch (error) {
+      // If it's already an AppError, rethrow it
+      if ((error as AppError).code) {
+        throw error;
+      }
+
+      // Otherwise, wrap it
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while fetching the entry",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+
+  /**
+   * Delete a journal entry
+   */
+  async deleteEntry(id: string): Promise<void> {
+    try {
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to delete entries",
+          retryable: false,
+        } as AppError;
+      }
+
+      // Delete entry with retry logic
+      await withRetry(async () => {
+        const { error } = await supabase
+          .from("journal_entries")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", user.id);
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+      });
+    } catch (error) {
+      // If it's already an AppError, rethrow it
+      if ((error as AppError).code) {
+        throw error;
+      }
+
+      // Otherwise, wrap it
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while deleting the entry",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+}
+
+// Export singleton instance
+export const entryService = new EntryService();
