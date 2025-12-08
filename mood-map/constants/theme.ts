@@ -123,11 +123,22 @@ export type EmotionColor = keyof typeof colors.emotion;
 export type FontSize = keyof typeof typography.fontSize;
 export type Spacing = keyof typeof spacing;
 
+// Font family exports for convenience
+export const Fonts = {
+  regular: typography.fontFamily.regular,
+  medium: typography.fontFamily.medium,
+  semibold: typography.fontFamily.semibold,
+  bold: typography.fontFamily.bold,
+  rounded: "System", // Can be customized with a rounded font
+  mono: "Courier", // Monospace font
+};
+
 // Legacy Colors export for compatibility with existing Expo template code
 export const Colors = {
   light: {
     text: colors.textPrimary,
     background: colors.background,
+    cardBackground: colors.backgroundSecondary,
     tint: colors.primary[400], // Soft dusty rose
     icon: colors.neutral[600],
     tabIconDefault: colors.neutral[500],
@@ -136,6 +147,7 @@ export const Colors = {
   dark: {
     text: colors.neutral[50],
     background: colors.neutral[900],
+    cardBackground: colors.neutral[800],
     tint: colors.primary[300],
     icon: colors.neutral[400],
     tabIconDefault: colors.neutral[500],
