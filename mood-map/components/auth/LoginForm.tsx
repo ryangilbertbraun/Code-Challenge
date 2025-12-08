@@ -87,7 +87,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
       </View>
 
       <AppButton
-        label="login"
+        label="Login"
         onPress={() => onLogin(email, password)}
         loading={loading}
       />

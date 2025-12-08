@@ -126,7 +126,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
       </View>
 
       <AppButton
-        label="sign up"
+        label="Sign up"
         onPress={() => onEmailPress(email, password, confirmPassword)}
         loading={loading}
       />
