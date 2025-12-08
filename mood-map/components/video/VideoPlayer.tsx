@@ -1,11 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
 } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { colors, typography, spacing } from "@/constants/theme";
@@ -27,14 +26,12 @@ interface VideoPlayerProps {
  */
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoUri,
-  thumbnailUri,
   autoPlay = false,
   showControls = true,
   style,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showPlayButton, setShowPlayButton] = useState(!autoPlay);
-  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
   const player = useVideoPlayer(videoUri, (player) => {

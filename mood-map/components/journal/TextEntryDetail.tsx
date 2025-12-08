@@ -78,8 +78,8 @@ const TextEntryDetail: React.FC<TextEntryDetailProps> = ({ entry }) => {
           <View style={styles.errorContainer}>
             <Text style={styles.errorTitle}>Analysis Unavailable</Text>
             <Text style={styles.errorMessage}>
-              We couldn't analyze the emotional content of this entry. The entry
-              has been saved, but mood data is not available.
+              We couldn&apos;t analyze the emotional content of this entry. The
+              entry has been saved, but mood data is not available.
             </Text>
           </View>
         )}

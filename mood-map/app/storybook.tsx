@@ -1,7 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { colors, typography, spacing } from "@/constants/theme";
-import { Link } from "expo-router";
 
 /**
  * Storybook Navigation Screen

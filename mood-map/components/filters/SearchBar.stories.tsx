@@ -30,7 +30,7 @@ const SearchBarWithState = (props: {
           color: colors.textSecondary,
         }}
       >
-        Current value: "{searchText}"
+        Current value: &quot;{searchText}&quot;
       </Text>
     </View>
   );

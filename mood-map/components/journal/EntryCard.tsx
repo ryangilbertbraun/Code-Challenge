@@ -1,10 +1,9 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -27,15 +26,13 @@ interface EntryCardProps {
  */
 const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
   // Create video player for video entries
-  const videoPlayer = useMemo(() => {
-    if (entry.type === EntryType.VIDEO && entry.videoUrl) {
-      return useVideoPlayer(entry.videoUrl, (player) => {
-        player.pause();
-        player.currentTime = 0;
-      });
+  const videoUrl = entry.type === EntryType.VIDEO ? entry.videoUrl : null;
+  const videoPlayer = useVideoPlayer(videoUrl || "", (player) => {
+    if (videoUrl) {
+      player.pause();
+      player.currentTime = 0;
     }
-    return null;
-  }, [entry.type === EntryType.VIDEO ? entry.videoUrl : null]);
+  });
 
   const formatTimestamp = (date: Date) => {
     const now = new Date();

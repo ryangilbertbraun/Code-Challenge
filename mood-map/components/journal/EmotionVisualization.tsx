@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { colors, typography, spacing } from "@/constants/theme";
-import { MoodMetadata, Sentiment } from "@/types/entry.types";
+import { MoodMetadata } from "@/types/entry.types";
 import MoodBadge from "./MoodBadge";
 
 interface EmotionVisualizationProps {

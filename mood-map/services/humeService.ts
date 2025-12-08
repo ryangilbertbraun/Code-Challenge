@@ -347,25 +347,6 @@ class HumeService implements IHumeService {
   }
 
   /**
-   * Analyzes a video by URL (avoids duplicate upload)
-   * @param videoUrl The public URL of the video to analyze
-   * @returns HumeEmotionData with raw emotion metrics
-   * @throws AppError if analysis fails
-   */
-  async analyzeVideoByUrl(videoUrl: string): Promise<HumeEmotionData> {
-    // Use retry logic for the analysis pipeline
-    return withRetry(async () => {
-      // Step 1: Submit job to Hume API with existing URL
-      const jobId = await this.submitHumeJob(videoUrl);
-
-      // Step 2: Poll for results
-      const emotionData = await this.pollForResults(jobId);
-
-      return emotionData;
-    });
-  }
-
-  /**
    * Submits a video analysis job without waiting for results
    * Use this for async processing where you'll check status later
    * @param videoUrl The public URL of the video to analyze

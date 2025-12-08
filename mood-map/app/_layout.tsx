@@ -31,7 +31,7 @@ export default function RootLayout() {
   // Initialize session on app start
   useEffect(() => {
     initializeSession();
-  }, []);
+  }, [initializeSession]);
 
   const handleSplashFinish = () => {
     setShowSplash(false);

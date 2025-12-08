@@ -14,9 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { colors, typography, spacing } from "@/constants/theme";
 import { useEntryStore } from "@/stores/entryStore";
-import { EntryType } from "@/types/entry.types";
 import VideoRecorder from "@/components/video/VideoRecorder";
-import AppButton from "@/components/ui/AppButton";
 import { Ionicons } from "@expo/vector-icons";
 
 type InputMode = "text" | "video";
@@ -149,11 +147,7 @@ const CreateEntryScreen: React.FC = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -170,7 +164,35 @@ const CreateEntryScreen: React.FC = () => {
 
         <Text style={styles.headerTitle}>New Entry</Text>
 
-        <View style={styles.headerButton} />
+        {mode === "text" ? (
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleTextSubmit}
+            disabled={isLoading || !textContent.trim()}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color={colors.primary[700]} />
+            ) : (
+              <Text
+                style={[
+                  styles.saveButtonText,
+                  (!textContent.trim() || isLoading) &&
+                    styles.saveButtonTextDisabled,
+                ]}
+              >
+                Save
+              </Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleStartRecording}
+            disabled={isLoading}
+          >
+            <Ionicons name="videocam" size={28} color={colors.primary[700]} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Mode Toggle */}
@@ -186,7 +208,7 @@ const CreateEntryScreen: React.FC = () => {
           <Ionicons
             name="create-outline"
             size={20}
-            color={mode === "text" ? colors.primary[400] : colors.textSecondary}
+            color={mode === "text" ? colors.textPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -209,9 +231,7 @@ const CreateEntryScreen: React.FC = () => {
           <Ionicons
             name="videocam-outline"
             size={20}
-            color={
-              mode === "video" ? colors.primary[400] : colors.textSecondary
-            }
+            color={mode === "video" ? colors.textPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -225,58 +245,50 @@ const CreateEntryScreen: React.FC = () => {
       </View>
 
       {/* Content Area */}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
       >
-        {mode === "text" ? (
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="How are you feeling today?"
-              placeholderTextColor={colors.textTertiary}
-              value={textContent}
-              onChangeText={setTextContent}
-              multiline
-              textAlignVertical="top"
-              autoFocus
-              editable={!isLoading}
-            />
-          </View>
-        ) : (
-          <View style={styles.videoContainer}>
-            <View style={styles.videoPlaceholder}>
-              <Ionicons name="videocam" size={64} color={colors.neutral[300]} />
-              <Text style={styles.videoPlaceholderText}>
-                Record a video journal entry
-              </Text>
-              <Text style={styles.videoPlaceholderSubtext}>
-                Share your thoughts and emotions through video
-              </Text>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {mode === "text" ? (
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="How are you feeling today?"
+                placeholderTextColor={colors.textTertiary}
+                value={textContent}
+                onChangeText={setTextContent}
+                multiline
+                textAlignVertical="top"
+                autoFocus
+                editable={!isLoading}
+              />
             </View>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Action Button */}
-      <View style={styles.footer}>
-        {mode === "text" ? (
-          <AppButton
-            label={isLoading ? "Creating..." : "Create Entry"}
-            onPress={handleTextSubmit}
-            disabled={isLoading || !textContent.trim()}
-            loading={isLoading}
-          />
-        ) : (
-          <AppButton
-            label="Start Recording"
-            onPress={handleStartRecording}
-            disabled={isLoading}
-          />
-        )}
-      </View>
-    </KeyboardAvoidingView>
+          ) : (
+            <View style={styles.videoContainer}>
+              <View style={styles.videoPlaceholder}>
+                <Ionicons
+                  name="videocam"
+                  size={64}
+                  color={colors.neutral[300]}
+                />
+                <Text style={styles.videoPlaceholderText}>
+                  Record a video journal entry
+                </Text>
+                <Text style={styles.videoPlaceholderSubtext}>
+                  Share your thoughts and emotions through video
+                </Text>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -294,6 +306,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[4],
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral[200],
+    backgroundColor: colors.background,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   headerButton: {
     width: 44,
@@ -305,6 +321,23 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.semibold,
     color: colors.textPrimary,
+    flex: 1,
+    textAlign: "center",
+  },
+  saveButton: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    justifyContent: "center",
+    alignItems: "center",
+    minWidth: 60,
+  },
+  saveButtonText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.primary[700],
+  },
+  saveButtonTextDisabled: {
+    color: colors.neutral[300],
   },
   modeToggle: {
     flexDirection: "row",
@@ -323,17 +356,18 @@ const styles = StyleSheet.create({
     gap: spacing[2],
   },
   modeButtonActive: {
-    backgroundColor: colors.primary[50],
-    borderWidth: 1,
-    borderColor: colors.primary[400],
+    backgroundColor: colors.primary[400],
+    borderWidth: 2,
+    borderColor: colors.primary[600],
   },
   modeButtonText: {
     fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.medium,
+    fontWeight: typography.fontWeight.semibold,
     color: colors.textSecondary,
   },
   modeButtonTextActive: {
-    color: colors.primary[400],
+    color: colors.textPrimary,
+    fontWeight: typography.fontWeight.bold,
   },
   content: {
     flex: 1,
@@ -378,12 +412,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing[2],
     textAlign: "center",
-  },
-  footer: {
-    padding: spacing[4],
-    paddingBottom: spacing[6],
-    borderTopWidth: 1,
-    borderTopColor: colors.neutral[200],
   },
 });
 

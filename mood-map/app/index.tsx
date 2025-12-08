@@ -16,12 +16,12 @@ import StorybookUIRoot from "../.storybook/Storybook";
  * Requirements: 2.6, 2.7
  */
 export default function Index() {
+  const { session, isLoading } = useAuthStore();
+
   // Enable Storybook mode for component development
   if (ENABLE_STORYBOOK) {
     return <StorybookUIRoot />;
   }
-
-  const { session, isLoading } = useAuthStore();
 
   // Show loading indicator while initializing session
   if (isLoading) {

@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from "react-native";
+import { Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import AppButton from "@/components/ui/AppButton";
 
 interface WelcomeSplashProps {
