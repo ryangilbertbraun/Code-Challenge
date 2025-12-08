@@ -10,6 +10,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
+import { LinearGradient } from "expo-linear-gradient";
 import { colors, typography, spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/authStore";
 import { useEntryStore } from "@/stores/entryStore";
@@ -22,6 +24,13 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { session, logout } = useAuthStore();
   const { entries } = useEntryStore();
+
+  const videoSource = require("@/assets/videos/writing_book.mp4");
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
 
   // Calculate user statistics
   const stats = useMemo(() => {
@@ -110,17 +119,36 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {session?.user.email?.charAt(0).toUpperCase() || "U"}
-              </Text>
-            </View>
+          <View style={styles.videoContainer}>
+            <VideoView
+              player={player}
+              style={styles.backgroundVideo}
+              contentFit="cover"
+              nativeControls={false}
+            />
+            <LinearGradient
+              colors={[
+                "rgba(250, 245, 246, 0.5)",
+                "rgba(250, 245, 246, 0.7)",
+                "rgba(250, 245, 246, 0.85)",
+                "rgba(250, 245, 246, 1)",
+              ]}
+              style={styles.gradientOverlay}
+            />
           </View>
-          <Text style={styles.userName}>
-            {session?.user.email?.split("@")[0] || "User"}
-          </Text>
-          <Text style={styles.userEmail}>{session?.user.email}</Text>
+          <View style={styles.heroContent}>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {session?.user.email?.charAt(0).toUpperCase() || "U"}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.userName}>
+              {session?.user.email?.split("@")[0] || "User"}
+            </Text>
+            <Text style={styles.userEmail}>{session?.user.email}</Text>
+          </View>
         </View>
 
         {/* Stats Section */}
@@ -360,15 +388,43 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[8],
   },
   heroSection: {
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[8],
-    paddingBottom: spacing[6],
+    position: "relative",
+    overflow: "hidden",
+    minHeight: 280,
+  },
+  videoContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 350,
+    overflow: "hidden",
+  },
+  backgroundVideo: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  gradientOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  heroContent: {
     alignItems: "center",
-    gap: spacing[2],
+    paddingTop: spacing[12],
+    paddingBottom: spacing[6],
+    paddingHorizontal: spacing[4],
+    zIndex: 1,
   },
   avatarContainer: {
-    marginBottom: spacing[2],
+    marginBottom: spacing[3],
   },
   avatar: {
     width: 96,
@@ -395,6 +451,7 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize["2xl"],
     fontWeight: typography.fontWeight.bold,
     color: colors.textPrimary,
+    marginBottom: spacing[1],
   },
   userEmail: {
     fontSize: typography.fontSize.base,

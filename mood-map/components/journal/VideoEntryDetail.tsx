@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { Video, ResizeMode } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { colors, typography, spacing } from "@/constants/theme";
 import { VideoEntry, AnalysisStatus } from "@/types/entry.types";
 import { useEntryStore } from "@/stores/entryStore";
@@ -24,10 +24,12 @@ interface VideoEntryDetailProps {
  * Shows video playback controls, timestamp, and detailed emotion recognition data.
  */
 const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const videoRef = React.useRef<Video>(null);
   const { checkVideoAnalysis } = useEntryStore();
+
+  const player = useVideoPlayer(entry.videoUrl, (player) => {
+    player.pause();
+  });
 
   // Check analysis status when component mounts or when entry status changes
   useEffect(() => {
@@ -62,17 +64,6 @@ const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${String(secs).padStart(2, "0")}`;
-  };
-
-  const handlePlayPause = async () => {
-    if (!videoRef.current) return;
-
-    if (isPlaying) {
-      await videoRef.current.pauseAsync();
-    } else {
-      await videoRef.current.playAsync();
-    }
-    setIsPlaying(!isPlaying);
   };
 
   const renderHumeEmotionData = () => {
@@ -153,17 +144,13 @@ const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
       </View>
 
       <View style={styles.videoSection}>
-        <Video
-          ref={videoRef}
-          source={{ uri: entry.videoUrl }}
+        <VideoView
+          player={player}
           style={styles.video}
-          resizeMode={ResizeMode.CONTAIN}
-          useNativeControls
-          onPlaybackStatusUpdate={(status) => {
-            if (status.isLoaded) {
-              setIsPlaying(status.isPlaying);
-            }
-          }}
+          contentFit="contain"
+          nativeControls={true}
+          allowsFullscreen={true}
+          allowsPictureInPicture={true}
         />
       </View>
 

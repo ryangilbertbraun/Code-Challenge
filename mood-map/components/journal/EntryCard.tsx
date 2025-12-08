@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { Video, ResizeMode } from "expo-av";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { colors, typography, spacing } from "@/constants/theme";
 import { JournalEntry, EntryType, AnalysisStatus } from "@/types/entry.types";
 import EmotionVisualization from "./EmotionVisualization";
@@ -26,6 +26,17 @@ interface EntryCardProps {
  * Includes timestamp and mood metadata summary.
  */
 const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
+  // Create video player for video entries
+  const videoPlayer = useMemo(() => {
+    if (entry.type === EntryType.VIDEO && entry.videoUrl) {
+      return useVideoPlayer(entry.videoUrl, (player) => {
+        player.pause();
+        player.currentTime = 0;
+      });
+    }
+    return null;
+  }, [entry.type === EntryType.VIDEO ? entry.videoUrl : null]);
+
   const formatTimestamp = (date: Date) => {
     const now = new Date();
     const entryDate = new Date(date);
@@ -82,16 +93,12 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
       <>
         <View style={styles.videoPreview}>
           {/* Show video first frame as thumbnail */}
-          {entry.videoUrl ? (
-            <Video
-              source={{ uri: entry.videoUrl }}
+          {entry.videoUrl && videoPlayer ? (
+            <VideoView
+              player={videoPlayer}
               style={styles.thumbnail}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay={false}
-              isLooping={false}
-              isMuted={true}
-              positionMillis={0}
-              onError={(error) => console.log("Video thumbnail error:", error)}
+              contentFit="cover"
+              nativeControls={false}
             />
           ) : (
             <View style={styles.thumbnailPlaceholder}>

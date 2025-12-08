@@ -5,12 +5,13 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGuard } from "@/navigation/AuthGuard";
+import CustomSplashScreen from "@/components/SplashScreen";
 
 /**
  * Root layout component with navigation and route protection
@@ -25,11 +26,16 @@ import { AuthGuard } from "@/navigation/AuthGuard";
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { initializeSession } = useAuthStore();
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialize session on app start
   useEffect(() => {
     initializeSession();
   }, []);
+
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -50,6 +56,7 @@ export default function RootLayout() {
         </Stack>
       </AuthGuard>
       <StatusBar style="auto" />
+      {showSplash && <CustomSplashScreen onFinish={handleSplashFinish} />}
     </ThemeProvider>
   );
 }

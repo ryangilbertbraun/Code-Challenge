@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { VideoView, useVideoPlayer } from "expo-video";
+import { LinearGradient } from "expo-linear-gradient";
 import { useInsightsStore } from "@/stores/insightsStore";
 import { colors, typography, spacing } from "@/constants/theme";
 import { TrendType } from "@/types/insights.types";
@@ -25,15 +27,47 @@ export default function AIInsightsScreen() {
     fetchInsights();
   };
 
+  const videoSource = require("@/assets/videos/writing.mp4");
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
   // Show empty state when no insights yet
   if (!insights && !isLoading && !error) {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>AI Insights</Text>
-          <Text style={styles.heroSubtitle}>
-            Get personalized analysis of your emotional journey
-          </Text>
+          <View style={styles.videoContainer}>
+            <VideoView
+              player={player}
+              style={styles.backgroundVideo}
+              contentFit="cover"
+              nativeControls={false}
+            />
+            <LinearGradient
+              colors={[
+                "rgba(255, 252, 252, 0.5)",
+                "rgba(255, 252, 252, 0.7)",
+                "rgba(255, 252, 252, 0.85)",
+                "rgba(255, 252, 252, 1)",
+              ]}
+              style={styles.gradientOverlay}
+            />
+          </View>
+          <View style={styles.heroContent}>
+            <Ionicons
+              name="bulb-outline"
+              size={48}
+              color={colors.primary[600]}
+              style={styles.heroIcon}
+            />
+            <Text style={styles.heroTitle}>AI Insights</Text>
+            <Text style={styles.heroSubtitle}>
+              Get personalized analysis of your emotional journey
+            </Text>
+          </View>
         </View>
         <View style={styles.emptyContainer}>
           <Ionicons
@@ -62,10 +96,35 @@ export default function AIInsightsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>AI Insights</Text>
-          <Text style={styles.heroSubtitle}>
-            Analyzing your emotional journey
-          </Text>
+          <View style={styles.videoContainer}>
+            <VideoView
+              player={player}
+              style={styles.backgroundVideo}
+              contentFit="cover"
+              nativeControls={false}
+            />
+            <LinearGradient
+              colors={[
+                "rgba(255, 252, 252, 0.5)",
+                "rgba(255, 252, 252, 0.7)",
+                "rgba(255, 252, 252, 0.85)",
+                "rgba(255, 252, 252, 1)",
+              ]}
+              style={styles.gradientOverlay}
+            />
+          </View>
+          <View style={styles.heroContent}>
+            <Ionicons
+              name="bulb-outline"
+              size={48}
+              color={colors.primary[600]}
+              style={styles.heroIcon}
+            />
+            <Text style={styles.heroTitle}>AI Insights</Text>
+            <Text style={styles.heroSubtitle}>
+              Analyzing your emotional journey
+            </Text>
+          </View>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary[500]} />
@@ -82,10 +141,35 @@ export default function AIInsightsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>AI Insights</Text>
-          <Text style={styles.heroSubtitle}>
-            Get personalized analysis of your emotional journey
-          </Text>
+          <View style={styles.videoContainer}>
+            <VideoView
+              player={player}
+              style={styles.backgroundVideo}
+              contentFit="cover"
+              nativeControls={false}
+            />
+            <LinearGradient
+              colors={[
+                "rgba(255, 252, 252, 0.5)",
+                "rgba(255, 252, 252, 0.7)",
+                "rgba(255, 252, 252, 0.85)",
+                "rgba(255, 252, 252, 1)",
+              ]}
+              style={styles.gradientOverlay}
+            />
+          </View>
+          <View style={styles.heroContent}>
+            <Ionicons
+              name="bulb-outline"
+              size={48}
+              color={colors.primary[600]}
+              style={styles.heroIcon}
+            />
+            <Text style={styles.heroTitle}>AI Insights</Text>
+            <Text style={styles.heroSubtitle}>
+              Get personalized analysis of your emotional journey
+            </Text>
+          </View>
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="warning-outline" size={64} color={colors.error} />
@@ -108,10 +192,35 @@ export default function AIInsightsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>AI Insights</Text>
-          <Text style={styles.heroSubtitle}>
-            Personalized analysis of your emotional journey
-          </Text>
+          <View style={styles.videoContainer}>
+            <VideoView
+              player={player}
+              style={styles.backgroundVideo}
+              contentFit="cover"
+              nativeControls={false}
+            />
+            <LinearGradient
+              colors={[
+                "rgba(255, 252, 252, 0.5)",
+                "rgba(255, 252, 252, 0.7)",
+                "rgba(255, 252, 252, 0.85)",
+                "rgba(255, 252, 252, 1)",
+              ]}
+              style={styles.gradientOverlay}
+            />
+          </View>
+          <View style={styles.heroContent}>
+            <Ionicons
+              name="bulb-outline"
+              size={48}
+              color={colors.primary[600]}
+              style={styles.heroIcon}
+            />
+            <Text style={styles.heroTitle}>AI Insights</Text>
+            <Text style={styles.heroSubtitle}>
+              Personalized analysis of your emotional journey
+            </Text>
+          </View>
         </View>
 
         {insights && (
@@ -296,18 +405,49 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[8],
   },
   heroSection: {
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[6],
-    paddingBottom: spacing[5],
+    position: "relative",
+    overflow: "hidden",
+    minHeight: 240,
+  },
+  videoContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    overflow: "hidden",
+  },
+  backgroundVideo: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  gradientOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  heroContent: {
     alignItems: "center",
-    gap: spacing[2],
+    paddingTop: spacing[12],
+    paddingBottom: spacing[6],
+    paddingHorizontal: spacing[4],
+    zIndex: 1,
+  },
+  heroIcon: {
+    marginBottom: spacing[3],
   },
   heroTitle: {
     fontSize: typography.fontSize["3xl"],
     fontWeight: typography.fontWeight.bold,
     color: colors.textPrimary,
-    marginTop: 20,
+    marginBottom: spacing[2],
   },
   heroSubtitle: {
     fontSize: typography.fontSize.base,
