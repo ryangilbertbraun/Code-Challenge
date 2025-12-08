@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useInsightsStore } from "@/stores/insightsStore";
 import { colors, typography, spacing } from "@/constants/theme";
 import { TrendType } from "@/types/insights.types";
@@ -29,13 +30,17 @@ export default function AIInsightsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}> AI Insights</Text>
+          <Text style={styles.heroTitle}>AI Insights</Text>
           <Text style={styles.heroSubtitle}>
             Get personalized analysis of your emotional journey
           </Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🔍</Text>
+          <Ionicons
+            name="search-outline"
+            size={64}
+            color={colors.textSecondary}
+          />
           <Text style={styles.emptyTitle}>Ready to Analyze</Text>
           <Text style={styles.emptyMessage}>
             Tap the button below to generate AI insights based on your recent
@@ -57,7 +62,7 @@ export default function AIInsightsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>🧠 AI Insights</Text>
+          <Text style={styles.heroTitle}>AI Insights</Text>
           <Text style={styles.heroSubtitle}>
             Analyzing your emotional journey
           </Text>
@@ -77,13 +82,13 @@ export default function AIInsightsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>🧠 AI Insights</Text>
+          <Text style={styles.heroTitle}>AI Insights</Text>
           <Text style={styles.heroSubtitle}>
             Get personalized analysis of your emotional journey
           </Text>
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <Ionicons name="warning-outline" size={64} color={colors.error} />
           <Text style={styles.errorTitle}>Unable to Generate Insights</Text>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
@@ -103,7 +108,7 @@ export default function AIInsightsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>🧠 AI Insights</Text>
+          <Text style={styles.heroTitle}>AI Insights</Text>
           <Text style={styles.heroSubtitle}>
             Personalized analysis of your emotional journey
           </Text>
@@ -174,9 +179,11 @@ export default function AIInsightsScreen() {
                 {insights.trends.map((trend, index) => (
                   <View key={index} style={styles.trendItem}>
                     <View style={styles.trendHeader}>
-                      <Text style={styles.trendIcon}>
-                        {getTrendIcon(trend.type)}
-                      </Text>
+                      <Ionicons
+                        name={getTrendIcon(trend.type)}
+                        size={20}
+                        color={getTrendColor(trend.type)}
+                      />
                       <Text style={styles.trendTitle}>{trend.title}</Text>
                     </View>
                     <Text style={styles.trendDescription}>
@@ -194,7 +201,11 @@ export default function AIInsightsScreen() {
                 {insights.recommendations.map((rec, index) => (
                   <View key={index} style={styles.recommendationItem}>
                     <View style={styles.recommendationHeader}>
-                      <Text style={styles.recommendationIcon}>💡</Text>
+                      <Ionicons
+                        name="bulb-outline"
+                        size={20}
+                        color={colors.primary[600]}
+                      />
                       <Text style={styles.recommendationTitle}>
                         {rec.title}
                       </Text>
@@ -220,8 +231,13 @@ export default function AIInsightsScreen() {
                 onPress={handleAnalyze}
                 activeOpacity={0.8}
               >
+                <Ionicons
+                  name="refresh-outline"
+                  size={20}
+                  color={colors.textPrimary}
+                />
                 <Text style={styles.regenerateButtonText}>
-                  🔄 Regenerate Insights
+                  Regenerate Insights
                 </Text>
               </TouchableOpacity>
             </View>
@@ -249,14 +265,25 @@ function getEmotionColor(emotion: string): string {
   return emotionColors[emotion] || "#757575";
 }
 
-function getTrendIcon(type: TrendType): string {
+function getTrendIcon(type: TrendType): keyof typeof Ionicons.glyphMap {
   switch (type) {
     case TrendType.POSITIVE:
-      return "📈";
+      return "trending-up";
     case TrendType.CONCERN:
-      return "⚠️";
+      return "alert-circle-outline";
     default:
-      return "➡️";
+      return "arrow-forward";
+  }
+}
+
+function getTrendColor(type: TrendType): string {
+  switch (type) {
+    case TrendType.POSITIVE:
+      return colors.success;
+    case TrendType.CONCERN:
+      return colors.warning;
+    default:
+      return colors.textSecondary;
   }
 }
 
@@ -294,9 +321,7 @@ const styles = StyleSheet.create({
     padding: spacing[6],
     gap: spacing[4],
   },
-  emptyIcon: {
-    fontSize: 64,
-  },
+
   emptyTitle: {
     fontSize: typography.fontSize["2xl"],
     fontWeight: typography.fontWeight.bold,
@@ -352,9 +377,7 @@ const styles = StyleSheet.create({
     gap: spacing[4],
     padding: spacing[6],
   },
-  errorIcon: {
-    fontSize: 64,
-  },
+
   errorTitle: {
     fontSize: typography.fontSize.xl,
     fontWeight: typography.fontWeight.bold,
@@ -464,9 +487,7 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     marginBottom: spacing[1],
   },
-  trendIcon: {
-    fontSize: 20,
-  },
+
   trendTitle: {
     fontSize: typography.fontSize.base,
     fontWeight: typography.fontWeight.semibold,
@@ -488,9 +509,7 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     marginBottom: spacing[1],
   },
-  recommendationIcon: {
-    fontSize: 20,
-  },
+
   recommendationTitle: {
     fontSize: typography.fontSize.base,
     fontWeight: typography.fontWeight.semibold,
@@ -514,6 +533,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   regenerateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
     backgroundColor: colors.primary[400],
     paddingHorizontal: spacing[5],
     paddingVertical: spacing[3],

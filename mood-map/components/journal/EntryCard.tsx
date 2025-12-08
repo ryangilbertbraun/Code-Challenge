@@ -108,18 +108,33 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
         {(entry.analysisStatus === AnalysisStatus.LOADING ||
           entry.analysisStatus === AnalysisStatus.PENDING) && (
           <View style={styles.statusBadge}>
-            <Text style={styles.statusBadgeText}>⏳ Analysis in progress</Text>
+            <Ionicons
+              name="time-outline"
+              size={12}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.statusBadgeText}>Analysis in progress</Text>
           </View>
         )}
         {entry.analysisStatus === AnalysisStatus.SUCCESS &&
           entry.humeEmotionData && (
             <View style={styles.statusBadge}>
-              <Text style={styles.statusBadgeText}>✓ Emotion data ready</Text>
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={12}
+                color={colors.success}
+              />
+              <Text style={styles.statusBadgeText}>Emotion data ready</Text>
             </View>
           )}
         {entry.analysisStatus === AnalysisStatus.ERROR && (
           <View style={styles.statusBadge}>
-            <Text style={styles.statusBadgeText}>⏳ Still processing</Text>
+            <Ionicons
+              name="time-outline"
+              size={12}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.statusBadgeText}>Still processing</Text>
           </View>
         )}
       </>
@@ -130,8 +145,18 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <View style={styles.typeIndicator}>
+          <Ionicons
+            name={
+              entry.type === EntryType.TEXT
+                ? "document-text-outline"
+                : "videocam-outline"
+            }
+            size={14}
+            color={colors.textSecondary}
+            style={styles.typeIcon}
+          />
           <Text style={styles.typeText}>
-            {entry.type === EntryType.TEXT ? "📝 Text" : "🎥 Video"}
+            {entry.type === EntryType.TEXT ? "Text" : "Video"}
           </Text>
         </View>
         <Text style={styles.timestamp}>{formatTimestamp(entry.createdAt)}</Text>
@@ -163,10 +188,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing[3],
   },
   typeIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[1],
     paddingVertical: spacing[1],
     paddingHorizontal: spacing[2],
     backgroundColor: colors.backgroundSecondary,
     borderRadius: 8,
+  },
+  typeIcon: {
+    marginTop: 1,
   },
   typeText: {
     fontSize: typography.fontSize.xs,
@@ -225,6 +256,9 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeight.medium,
   },
   statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[1],
     alignSelf: "flex-start",
     paddingVertical: spacing[1],
     paddingHorizontal: spacing[3],

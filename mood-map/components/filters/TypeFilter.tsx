@@ -71,7 +71,7 @@ const TypeFilter: React.FC<TypeFilterProps> = ({
               isTextSelected && styles.buttonTextSelected,
             ]}
           >
-            📝 Text
+            Text
           </Text>
         </TouchableOpacity>
 
@@ -90,7 +90,7 @@ const TypeFilter: React.FC<TypeFilterProps> = ({
               isVideoSelected && styles.buttonTextSelected,
             ]}
           >
-            🎥 Video
+            Video
           </Text>
         </TouchableOpacity>
 

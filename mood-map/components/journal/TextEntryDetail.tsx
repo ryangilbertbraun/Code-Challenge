@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing } from "@/constants/theme";
 import { TextEntry, AnalysisStatus } from "@/types/entry.types";
 import EmotionVisualization from "./EmotionVisualization";
@@ -38,7 +39,13 @@ const TextEntryDetail: React.FC<TextEntryDetailProps> = ({ entry }) => {
       <View style={styles.header}>
         <Text style={styles.date}>{formatDate(entry.createdAt)}</Text>
         <View style={styles.typeIndicator}>
-          <Text style={styles.typeText}>📝 Text Entry</Text>
+          <Ionicons
+            name="document-text-outline"
+            size={16}
+            color={colors.textSecondary}
+            style={styles.typeIcon}
+          />
+          <Text style={styles.typeText}>Text Entry</Text>
         </View>
       </View>
 
@@ -106,11 +113,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing[2],
   },
   typeIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[1],
     alignSelf: "flex-start",
     paddingVertical: spacing[1],
     paddingHorizontal: spacing[3],
     backgroundColor: colors.backgroundSecondary,
     borderRadius: 8,
+  },
+  typeIcon: {
+    marginTop: 1,
   },
   typeText: {
     fontSize: typography.fontSize.sm,

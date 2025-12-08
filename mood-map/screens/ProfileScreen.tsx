@@ -127,19 +127,23 @@ export default function ProfileScreen() {
         <View style={styles.contentSection}>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statIcon}>📝</Text>
+              <Ionicons
+                name="document-text"
+                size={32}
+                color={colors.primary[500]}
+              />
               <Text style={styles.statValue}>{stats.totalEntries}</Text>
               <Text style={styles.statLabel}>Entries</Text>
             </View>
 
             <View style={styles.statCard}>
-              <Text style={styles.statIcon}>🔥</Text>
+              <Ionicons name="flame" size={32} color={colors.primary[500]} />
               <Text style={styles.statValue}>{stats.currentStreak}</Text>
               <Text style={styles.statLabel}>Day Streak</Text>
             </View>
 
             <View style={styles.statCard}>
-              <Text style={styles.statIcon}>✍️</Text>
+              <Ionicons name="create" size={32} color={colors.primary[500]} />
               <Text style={styles.statValue}>
                 {stats.totalWords.toLocaleString()}
               </Text>
@@ -147,7 +151,7 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.statCard}>
-              <Text style={styles.statIcon}>📅</Text>
+              <Ionicons name="calendar" size={32} color={colors.primary[500]} />
               <Text style={styles.statValue}>{stats.daysSinceStart}</Text>
               <Text style={styles.statLabel}>Days Active</Text>
             </View>
@@ -422,9 +426,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  statIcon: {
-    fontSize: 32,
-  },
   statValue: {
     fontSize: typography.fontSize["2xl"],
     fontWeight: typography.fontWeight.bold,
@@ -472,6 +473,22 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.base,
     color: colors.textPrimary,
     fontWeight: typography.fontWeight.medium,
+  },
+  menuItemTextDisabled: {
+    fontSize: typography.fontSize.base,
+    color: colors.textTertiary,
+    fontWeight: typography.fontWeight.medium,
+  },
+  comingSoonBadge: {
+    backgroundColor: colors.primary[100],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: 8,
+  },
+  comingSoonText: {
+    fontSize: typography.fontSize.xs,
+    color: colors.primary[700],
+    fontWeight: typography.fontWeight.semibold,
   },
   menuDivider: {
     height: 1,

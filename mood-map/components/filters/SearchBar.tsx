@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Text,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing } from "@/constants/theme";
 
 interface SearchBarProps {
@@ -54,9 +55,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchIcon}>
-        <Text style={styles.searchIconText}>🔍</Text>
-      </View>
+      <Ionicons
+        name="search-outline"
+        size={20}
+        color={colors.textSecondary}
+        style={styles.searchIcon}
+      />
       <TextInput
         style={styles.input}
         value={localValue}
@@ -73,7 +77,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onPress={handleClear}
           activeOpacity={0.7}
         >
-          <Text style={styles.clearButtonText}>✕</Text>
+          <Ionicons name="close" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
     </View>
@@ -95,10 +99,6 @@ const styles = StyleSheet.create({
   searchIcon: {
     marginRight: spacing[2],
   },
-  searchIconText: {
-    fontSize: typography.fontSize.base,
-    color: colors.textSecondary,
-  },
   input: {
     flex: 1,
     fontSize: typography.fontSize.base,
@@ -108,11 +108,6 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: spacing[1],
     marginLeft: spacing[2],
-  },
-  clearButtonText: {
-    fontSize: typography.fontSize.lg,
-    color: colors.textSecondary,
-    fontWeight: typography.fontWeight.bold,
   },
 });
 
