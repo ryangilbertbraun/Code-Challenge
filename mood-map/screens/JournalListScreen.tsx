@@ -23,10 +23,9 @@ import {
   getDateGroupsInOrder,
 } from "@/utils/dateGrouping";
 import EntryCard from "@/components/journal/EntryCard";
-import WelcomeHeader from "@/components/journal/WelcomeHeader";
+import HeroSection from "@/components/journal/HeroSection";
 import ActivityCalendar from "@/components/journal/ActivityCalendar";
 import JournalStats from "@/components/journal/JournalStats";
-import QuickActions from "@/components/journal/QuickActions";
 import FilterPanel from "@/components/filters/FilterPanel";
 import SearchBar from "@/components/filters/SearchBar";
 import { JournalEntry } from "@/types/entry.types";
@@ -397,7 +396,7 @@ const JournalListScreen: React.FC = () => {
 
   // Main dashboard view
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView
         contentContainerStyle={styles.dashboardContent}
         refreshControl={
@@ -409,35 +408,36 @@ const JournalListScreen: React.FC = () => {
           />
         }
       >
-        <WelcomeHeader totalEntries={entries.length} />
-
-        <QuickActions
+        <HeroSection
+          totalEntries={entries.length}
           onCreateEntry={handleCreateEntry}
           onViewAll={handleViewAll}
         />
 
-        <ActivityCalendar entries={entries} onDayPress={handleDayPress} />
+        <View style={styles.contentSection}>
+          <ActivityCalendar entries={entries} onDayPress={handleDayPress} />
 
-        <JournalStats entries={entries} />
+          <JournalStats entries={entries} />
 
-        {/* Recent Entries Preview */}
-        {recentEntries.length > 0 && (
-          <View style={styles.recentSection}>
-            <View style={styles.recentHeader}>
-              <Text style={styles.recentTitle}>Recent Entries</Text>
-              <TouchableOpacity onPress={handleViewAll}>
-                <Text style={styles.viewAllLink}>View All</Text>
-              </TouchableOpacity>
+          {/* Recent Entries Preview */}
+          {recentEntries.length > 0 && (
+            <View style={styles.recentSection}>
+              <View style={styles.recentHeader}>
+                <Text style={styles.recentTitle}>Recent Entries</Text>
+                <TouchableOpacity onPress={handleViewAll}>
+                  <Text style={styles.viewAllLink}>View All</Text>
+                </TouchableOpacity>
+              </View>
+              {recentEntries.map((entry) => (
+                <EntryCard
+                  key={entry.id}
+                  entry={entry}
+                  onPress={() => handleEntryPress(entry)}
+                />
+              ))}
             </View>
-            {recentEntries.map((entry) => (
-              <EntryCard
-                key={entry.id}
-                entry={entry}
-                onPress={() => handleEntryPress(entry)}
-              />
-            ))}
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
 
       <Modal
@@ -508,6 +508,9 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.neutral[200],
   },
   dashboardContent: {
+    paddingBottom: spacing[8],
+  },
+  contentSection: {
     padding: spacing[4],
     gap: spacing[5],
   },

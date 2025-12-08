@@ -24,7 +24,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
         onPress={onCreateEntry}
         activeOpacity={0.8}
       >
-        <Ionicons name="add-circle" size={24} color={colors.background} />
+        <Ionicons name="add-circle" size={24} color={colors.textPrimary} />
         <Text style={styles.primaryButtonText}>New Entry</Text>
       </TouchableOpacity>
 
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: typography.fontSize.base,
     fontWeight: typography.fontWeight.semibold,
-    color: colors.background,
+    color: colors.textPrimary,
   },
   secondaryButtonText: {
     fontSize: typography.fontSize.base,
