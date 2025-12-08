@@ -3,6 +3,9 @@
 // Load environment variables from .env file
 require("dotenv").config();
 
+// Define __DEV__ global for React Native
+global.__DEV__ = true;
+
 // Set up fallback environment variables for tests if not in .env
 process.env.EXPO_PUBLIC_SUPABASE_URL =
   process.env.EXPO_PUBLIC_SUPABASE_URL || "https://test.supabase.co";
