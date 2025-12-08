@@ -14,6 +14,10 @@ import * as EmotionVisualizationStories from "../components/journal/EmotionVisua
 import * as EntryCardStories from "../components/journal/EntryCard.stories";
 import * as TextEntryDetailStories from "../components/journal/TextEntryDetail.stories";
 import * as VideoEntryDetailStories from "../components/journal/VideoEntryDetail.stories";
+import * as EmotionSliderStories from "../components/filters/EmotionSlider.stories";
+import * as SearchBarStories from "../components/filters/SearchBar.stories";
+import * as TypeFilterStories from "../components/filters/TypeFilter.stories";
+import * as FilterPanelStories from "../components/filters/FilterPanel.stories";
 
 const allStories = {
   MoodBadge: MoodBadgeStories,
@@ -21,6 +25,10 @@ const allStories = {
   EntryCard: EntryCardStories,
   TextEntryDetail: TextEntryDetailStories,
   VideoEntryDetail: VideoEntryDetailStories,
+  EmotionSlider: EmotionSliderStories,
+  SearchBar: SearchBarStories,
+  TypeFilter: TypeFilterStories,
+  FilterPanel: FilterPanelStories,
 };
 
 /**
