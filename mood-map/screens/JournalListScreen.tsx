@@ -7,8 +7,10 @@ import {
   ActivityIndicator,
   SectionList,
   TouchableOpacity,
+  ScrollView,
+  Modal,
 } from "react-native";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, typography, spacing } from "@/constants/theme";
@@ -21,6 +23,11 @@ import {
   getDateGroupsInOrder,
 } from "@/utils/dateGrouping";
 import EntryCard from "@/components/journal/EntryCard";
+import WelcomeHeader from "@/components/journal/WelcomeHeader";
+import ActivityCalendar from "@/components/journal/ActivityCalendar";
+import JournalStats from "@/components/journal/JournalStats";
+import QuickActions from "@/components/journal/QuickActions";
+import FilterPanel from "@/components/filters/FilterPanel";
 import { JournalEntry } from "@/types/entry.types";
 
 interface SectionData {
@@ -31,16 +38,14 @@ interface SectionData {
 /**
  * JournalListScreen Component
  *
- * Main screen for displaying journal entries with filtering and grouping.
+ * Main dashboard/welcome screen for the journal.
  * Features:
- * - Fetches entries from entryStore
- * - Applies filters from filterStore
- * - Groups entries by date (today, yesterday, this week, earlier)
- * - Displays in descending chronological order
- * - Shows loading states
- * - Shows empty state when no entries match filters
- * - Implements pull-to-refresh
- * - Uses SectionList for performance with date grouping
+ * - Welcome message with time-based greeting
+ * - Activity calendar showing entry frequency (GitHub-style)
+ * - Quick stats about journaling activity
+ * - Quick actions for creating entries and viewing all
+ * - Recent entries preview
+ * - Pull-to-refresh
  *
  * Requirements: 5.1, 5.2, 5.7, 8.5
  */
@@ -49,6 +54,8 @@ const JournalListScreen: React.FC = () => {
   const { entries, isLoading, error, fetchEntries } = useEntryStore();
   const { filters } = useFilterStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [showAllEntries, setShowAllEntries] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Fetch entries on mount
   useEffect(() => {
@@ -128,6 +135,68 @@ const JournalListScreen: React.FC = () => {
     router.push("/create-entry");
   }, [router]);
 
+  // Handle viewing all entries
+  const handleViewAll = useCallback(() => {
+    setShowAllEntries(true);
+  }, []);
+
+  // Handle going back to dashboard
+  const handleBackToDashboard = useCallback(() => {
+    setShowAllEntries(false);
+  }, []);
+
+  // Handle day press in calendar
+  const handleDayPress = useCallback(
+    (date: Date, dayEntries: JournalEntry[]) => {
+      if (dayEntries.length === 1) {
+        router.push({
+          pathname: "/entry-detail",
+          params: { id: dayEntries[0].id },
+        });
+      } else if (dayEntries.length > 1) {
+        // Could show a modal or navigate to filtered view
+        setShowAllEntries(true);
+      }
+    },
+    [router]
+  );
+
+  // Handle filter button press
+  const handleFilterPress = useCallback(() => {
+    setShowFilterModal(true);
+  }, []);
+
+  // Handle filter modal close
+  const handleFilterClose = useCallback(() => {
+    setShowFilterModal(false);
+  }, []);
+
+  // Check if filters are active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      filters.searchText.trim() !== "" ||
+      filters.happiness.min !== 0 ||
+      filters.happiness.max !== 1 ||
+      filters.fear.min !== 0 ||
+      filters.fear.max !== 1 ||
+      filters.sadness.min !== 0 ||
+      filters.sadness.max !== 1 ||
+      filters.anger.min !== 0 ||
+      filters.anger.max !== 1 ||
+      filters.entryTypes.length < 2
+    );
+  }, [filters]);
+
+  // Get recent entries for preview (top 3)
+  const recentEntries = useMemo(() => {
+    return [...entries]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 3);
+  }, [entries]);
+
   // Loading state (initial load)
   if (isLoading && entries.length === 0) {
     return (
@@ -174,22 +243,23 @@ const JournalListScreen: React.FC = () => {
 
   // Empty state (no entries match filters)
   if (sections.length === 0) {
-    const hasActiveFilters =
-      filters.searchText.trim() !== "" ||
-      filters.happiness.min !== 0 ||
-      filters.happiness.max !== 1 ||
-      filters.fear.min !== 0 ||
-      filters.fear.max !== 1 ||
-      filters.sadness.min !== 0 ||
-      filters.sadness.max !== 1 ||
-      filters.anger.min !== 0 ||
-      filters.anger.max !== 1 ||
-      filters.entryTypes.length < 2;
-
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Journal</Text>
+          <TouchableOpacity
+            onPress={handleFilterPress}
+            style={styles.filterButton}
+          >
+            <Ionicons
+              name="filter"
+              size={24}
+              color={
+                hasActiveFilters ? colors.primary[500] : colors.textPrimary
+              }
+            />
+            {hasActiveFilters && <View style={styles.filterBadge} />}
+          </TouchableOpacity>
         </View>
         <View style={styles.centerContainer}>
           <Text style={styles.emptyTitle}>
@@ -212,20 +282,92 @@ const JournalListScreen: React.FC = () => {
     );
   }
 
-  // Main list view
+  // Show full list view when requested
+  if (showAllEntries) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              onPress={handleBackToDashboard}
+              style={styles.backButton}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={colors.textPrimary}
+              />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>All Entries</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleFilterPress}
+            style={styles.filterButton}
+          >
+            <Ionicons
+              name="filter"
+              size={24}
+              color={
+                hasActiveFilters ? colors.primary[500] : colors.textPrimary
+              }
+            />
+            {hasActiveFilters && <View style={styles.filterBadge} />}
+          </TouchableOpacity>
+        </View>
+
+        <SectionList
+          sections={sections}
+          renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
+          keyExtractor={keyExtractor}
+          contentContainerStyle={styles.listContent}
+          stickySectionHeadersEnabled={true}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
+            />
+          }
+          windowSize={10}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={true}
+        />
+
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={handleCreateEntry}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={32} color={colors.textPrimary} />
+        </TouchableOpacity>
+
+        <Modal
+          visible={showFilterModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={handleFilterClose}
+        >
+          <SafeAreaView style={styles.modalContainer} edges={["top"]}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={handleFilterClose}>
+                <Text style={styles.modalCloseText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <FilterPanel />
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    );
+  }
+
+  // Main dashboard view
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Journal</Text>
-      </View>
-
-      <SectionList
-        sections={sections}
-        renderItem={renderItem}
-        renderSectionHeader={renderSectionHeader}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.listContent}
-        stickySectionHeadersEnabled={true}
+      <ScrollView
+        contentContainerStyle={styles.dashboardContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -234,21 +376,53 @@ const JournalListScreen: React.FC = () => {
             colors={[colors.primary[500]]}
           />
         }
-        // Performance optimizations
-        windowSize={10}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        removeClippedSubviews={true}
-      />
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleCreateEntry}
-        activeOpacity={0.8}
       >
-        <Ionicons name="add" size={32} color={colors.textPrimary} />
-      </TouchableOpacity>
+        <WelcomeHeader totalEntries={entries.length} />
+
+        <QuickActions
+          onCreateEntry={handleCreateEntry}
+          onViewAll={handleViewAll}
+        />
+
+        <ActivityCalendar entries={entries} onDayPress={handleDayPress} />
+
+        <JournalStats entries={entries} />
+
+        {/* Recent Entries Preview */}
+        {recentEntries.length > 0 && (
+          <View style={styles.recentSection}>
+            <View style={styles.recentHeader}>
+              <Text style={styles.recentTitle}>Recent Entries</Text>
+              <TouchableOpacity onPress={handleViewAll}>
+                <Text style={styles.viewAllLink}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            {recentEntries.map((entry) => (
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                onPress={() => handleEntryPress(entry)}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      <Modal
+        visible={showFilterModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleFilterClose}
+      >
+        <SafeAreaView style={styles.modalContainer} edges={["top"]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={handleFilterClose}>
+              <Text style={styles.modalCloseText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <FilterPanel />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -264,15 +438,61 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[3],
     borderBottomWidth: 1,
     borderBottomColor: colors.neutral[200],
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  backButton: {
+    marginRight: spacing[3],
   },
   headerTitle: {
     fontSize: typography.fontSize["2xl"],
     fontWeight: typography.fontWeight.bold,
     color: colors.textPrimary,
   },
+  filterButton: {
+    padding: spacing[2],
+    position: "relative",
+  },
+  filterBadge: {
+    position: "absolute",
+    top: spacing[2],
+    right: spacing[2],
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary[500],
+  },
+  dashboardContent: {
+    padding: spacing[4],
+    gap: spacing[5],
+  },
   listContent: {
     padding: spacing[4],
     paddingBottom: spacing[8],
+  },
+  recentSection: {
+    gap: spacing[3],
+  },
+  recentHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  recentTitle: {
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textPrimary,
+  },
+  viewAllLink: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.primary[600],
   },
   sectionHeader: {
     backgroundColor: colors.backgroundSecondary,
@@ -340,6 +560,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.backgroundSecondary,
+  },
+  modalHeader: {
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[200],
+    alignItems: "flex-end",
+  },
+  modalCloseText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.primary[600],
   },
 });
 
