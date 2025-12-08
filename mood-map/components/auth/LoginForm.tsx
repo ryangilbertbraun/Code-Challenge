@@ -93,18 +93,25 @@ const LoginForm: React.FC<LoginFormProps> = ({
       />
 
       <AuthLegalFooter />
-      <AppButton
-        label="Back"
-        variant="secondary"
-        onPress={() => {
-          animateTransitionBack();
-        }}
-      />
+      <View style={styles.backButtonContainer}>
+        <AppButton
+          label="Back"
+          variant="secondary"
+          onPress={() => {
+            animateTransitionBack();
+          }}
+        />
+      </View>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
+  backButtonContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+    width: "100%",
+  },
   input: {
     backgroundColor: "#F1F1F1",
     borderRadius: 12,

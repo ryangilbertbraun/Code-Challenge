@@ -37,7 +37,7 @@ const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
         Track your emotions and understand {"\n"} your mental wellness journey.
       </Text>
       <AppButton
-        label="get started"
+        label="Get started"
         onPress={() => animateTransition("signup")}
       />
 

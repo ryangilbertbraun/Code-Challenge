@@ -4,13 +4,13 @@ import {
   Animated,
   Dimensions,
   Easing,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { useRouter } from "expo-router";
 
 import LoginBackground from "@/components/auth/LoginBackground";
 import WelcomeSplash from "@/components/auth/WelcomeSplash";
@@ -40,8 +40,12 @@ export default function AuthScreen() {
   const [splashHeight] = useState(new Animated.Value(250));
   const [optionsOpacity] = useState(new Animated.Value(0));
 
+  // Navigation
+  const router = useRouter();
+
   // Auth store
-  const { login, signup, isLoading, error, clearError } = useAuthStore();
+  const { login, signup, isLoading, error, clearError, setError } =
+    useAuthStore();
 
   // Unified heights for both login and signup
   const getAvatarHeight = () => {
@@ -51,21 +55,40 @@ export default function AuthScreen() {
     if (height < 800) {
       return hp("15%"); // Higher for small screens
     }
-    return hp("30%"); // Standard for larger screens
+    if (height < 900) {
+      return hp("28%"); // Higher for medium screens (iPhone 16 Pro)
+    }
+    return hp("30%"); // Standard for very large screens
   };
 
   const getOptionsHeight = () => {
-    if (height < 800) {
-      return hp("48%"); // Reduced to minimize empty space
+    if (height < 700) {
+      return hp("55%"); // Balanced space for very small screens
     }
-    return hp("36%"); // Reduced to minimize empty space
+    if (height < 800) {
+      return hp("50%"); // Balanced space for small screens
+    }
+    return hp("44%"); // Slightly taller for larger screens
   };
 
   const getFormHeight = () => {
-    if (height < 800) {
-      return hp("54%"); // Reduced to minimize empty space
+    if (height < 700) {
+      return hp("62%"); // Balanced space for very small screens
     }
-    return hp("42%"); // Reduced to minimize empty space
+    if (height < 800) {
+      return hp("56%"); // Balanced space for small screens
+    }
+    return hp("50%"); // Slightly taller for larger screens
+  };
+
+  const getFormMarginTop = () => {
+    if (height < 700) {
+      return 160; // Balanced margin for very small screens
+    }
+    if (height < 800) {
+      return 220; // Balanced margin for small screens
+    }
+    return 280; // Standard margin for larger screens
   };
 
   // Handle keyboard events to move avatar out of the way
@@ -177,10 +200,10 @@ export default function AuthScreen() {
   const handleLogin = async (email: string, password: string) => {
     try {
       await login({ email, password });
-      // On success, navigation will be handled by App.tsx checking session
-      Alert.alert("Success", "Logged in successfully!");
+      // Navigate to home screen on success
+      router.replace("/(tabs)");
     } catch (error) {
-      // Error is already set in the store
+      // Error is already set in the store and will be displayed in the form
       console.error("Login error:", error);
     }
   };
@@ -192,19 +215,16 @@ export default function AuthScreen() {
   ) => {
     // Validate passwords match
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
 
     try {
       await signup({ email, password, confirmPassword });
-      // On success, auto-login is handled by authStore
-      Alert.alert(
-        "Success",
-        "Account created successfully! You are now logged in."
-      );
+      // Navigate to home screen on success (auto-login is handled by authStore)
+      router.replace("/(tabs)");
     } catch (error) {
-      // Error is already set in the store
+      // Error is already set in the store and will be displayed in the form
       console.error("Signup error:", error);
     }
   };
@@ -227,6 +247,7 @@ export default function AuthScreen() {
             style={[
               styles.formContainer,
               {
+                marginTop: getFormMarginTop(),
                 height: formHeight,
                 opacity: optionsOpacity,
               },
@@ -272,7 +293,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   formContainer: {
-    marginTop: 280,
     width: "100%",
     paddingHorizontal: 32,
     backgroundColor: "white",

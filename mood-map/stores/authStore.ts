@@ -33,6 +33,7 @@ interface AuthStore {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   clearError: () => void;
+  setError: (error: string) => void;
   initializeSession: () => Promise<void>;
 }
 
@@ -271,5 +272,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    */
   clearError: () => {
     set({ error: null });
+  },
+
+  /**
+   * Set error state
+   */
+  setError: (error: string) => {
+    set({ error });
   },
 }));

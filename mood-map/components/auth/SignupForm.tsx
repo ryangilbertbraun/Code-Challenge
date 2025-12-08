@@ -132,13 +132,15 @@ const SignupForm: React.FC<SignupFormProps> = ({
       />
 
       <AuthLegalFooter />
-      <AppButton
-        label="Back"
-        variant="secondary"
-        onPress={() => {
-          animateTransitionBack();
-        }}
-      />
+      <View style={styles.backButtonContainer}>
+        <AppButton
+          label="Back"
+          variant="secondary"
+          onPress={() => {
+            animateTransitionBack();
+          }}
+        />
+      </View>
     </Animated.View>
   );
 };
@@ -147,6 +149,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "column",
     alignItems: "center",
+    width: "100%",
+  },
+  backButtonContainer: {
+    marginTop: 8,
+    marginBottom: 16,
     width: "100%",
   },
   input: {
