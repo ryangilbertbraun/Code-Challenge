@@ -28,7 +28,9 @@ interface EntryStore {
   createTextEntry: (content: string) => Promise<void>;
   createVideoEntry: (videoUri: string, duration?: number) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
-  checkVideoAnalysis: (entryId: string) => Promise<void>;
+  checkVideoAnalysis: (
+    entryId: string
+  ) => Promise<{ success: boolean; message: string } | null>;
   updateEntryAnalysis: (
     id: string,
     analysis: MoodMetadata | HumeEmotionData,

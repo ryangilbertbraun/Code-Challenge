@@ -305,8 +305,20 @@ class EntryService implements IEntryService {
         data: { publicUrl },
       } = supabase.storage.from("videos").getPublicUrl(uploadResult.path);
 
-      // Generate thumbnail URL (placeholder for now)
-      const thumbnailUrl = publicUrl.replace(".mp4", "_thumb.jpg");
+      // Use video URL as thumbnail
+      const thumbnailUrl = publicUrl;
+
+      // Use provided duration or default to 0
+      const videoDuration = duration || 0;
+
+      // Submit Hume analysis job (non-blocking)
+      let humeJobId: string | null = null;
+      try {
+        const { humeService } = await import("./humeService");
+        humeJobId = await humeService.submitAnalysisJob(publicUrl);
+      } catch (error) {
+        console.error("Failed to submit Hume job:", error);
+      }
 
       // Create entry with retry logic
       const result = await withRetry(async () => {
@@ -317,8 +329,11 @@ class EntryService implements IEntryService {
             entry_type: EntryType.VIDEO,
             video_url: publicUrl,
             thumbnail_url: thumbnailUrl,
-            duration: 0, // Will be updated after video processing
-            analysis_status: AnalysisStatus.PENDING,
+            duration: videoDuration,
+            hume_job_id: humeJobId,
+            analysis_status: humeJobId
+              ? AnalysisStatus.LOADING
+              : AnalysisStatus.PENDING,
           })
           .select()
           .single();
@@ -460,6 +475,108 @@ class EntryService implements IEntryService {
       throw {
         code: ErrorCode.NETWORK_SERVER_ERROR,
         message: "An unexpected error occurred while fetching the entry",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+
+  /**
+   * Update text entry with AI mood analysis results
+   */
+  async updateTextAnalysis(
+    entryId: string,
+    moodMetadata: MoodMetadata,
+    status: AnalysisStatus
+  ): Promise<void> {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to update entries",
+          retryable: false,
+        } as AppError;
+      }
+
+      await withRetry(async () => {
+        const { error } = await supabase
+          .from("journal_entries")
+          .update({
+            mood_metadata: moodMetadata,
+            analysis_status: status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", entryId)
+          .eq("user_id", user.id);
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+      });
+    } catch (error) {
+      console.error("Failed to update text analysis:", error);
+      if ((error as AppError).code) {
+        throw error;
+      }
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while updating the entry",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
+  }
+
+  /**
+   * Update video entry with Hume analysis results
+   */
+  async updateVideoAnalysis(
+    entryId: string,
+    humeEmotionData: HumeEmotionData,
+    status: AnalysisStatus
+  ): Promise<void> {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to update entries",
+          retryable: false,
+        } as AppError;
+      }
+
+      await withRetry(async () => {
+        const { error } = await supabase
+          .from("journal_entries")
+          .update({
+            hume_emotion_data: humeEmotionData,
+            analysis_status: status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", entryId)
+          .eq("user_id", user.id);
+
+        if (error) {
+          throw mapDatabaseError(error);
+        }
+      });
+    } catch (error) {
+      console.error("Failed to update video analysis:", error);
+      if ((error as AppError).code) {
+        throw error;
+      }
+      throw {
+        code: ErrorCode.NETWORK_SERVER_ERROR,
+        message: "An unexpected error occurred while updating the entry",
         details: error,
         retryable: true,
       } as AppError;
