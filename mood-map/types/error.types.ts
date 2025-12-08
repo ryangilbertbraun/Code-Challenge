@@ -1,0 +1,35 @@
+// Error type definitions for application error handling
+
+export enum ErrorCode {
+  // Authentication errors
+  AUTH_INVALID_CREDENTIALS = "AUTH_INVALID_CREDENTIALS",
+  AUTH_EMAIL_EXISTS = "AUTH_EMAIL_EXISTS",
+  AUTH_INVALID_EMAIL = "AUTH_INVALID_EMAIL",
+  AUTH_WEAK_PASSWORD = "AUTH_WEAK_PASSWORD",
+  AUTH_SESSION_EXPIRED = "AUTH_SESSION_EXPIRED",
+
+  // Entry errors
+  ENTRY_EMPTY_CONTENT = "ENTRY_EMPTY_CONTENT",
+  ENTRY_NOT_FOUND = "ENTRY_NOT_FOUND",
+  ENTRY_UNAUTHORIZED = "ENTRY_UNAUTHORIZED",
+
+  // Analysis errors
+  ANALYSIS_LLM_FAILED = "ANALYSIS_LLM_FAILED",
+  ANALYSIS_HUME_FAILED = "ANALYSIS_HUME_FAILED",
+  ANALYSIS_INVALID_RESPONSE = "ANALYSIS_INVALID_RESPONSE",
+
+  // Network errors
+  NETWORK_TIMEOUT = "NETWORK_TIMEOUT",
+  NETWORK_OFFLINE = "NETWORK_OFFLINE",
+  NETWORK_SERVER_ERROR = "NETWORK_SERVER_ERROR",
+
+  // Validation errors
+  VALIDATION_FAILED = "VALIDATION_FAILED",
+}
+
+export interface AppError {
+  code: ErrorCode;
+  message: string;
+  details?: unknown;
+  retryable: boolean;
+}
