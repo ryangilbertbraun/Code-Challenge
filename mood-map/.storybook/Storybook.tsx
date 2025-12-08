@@ -18,6 +18,8 @@ import * as EmotionSliderStories from "../components/filters/EmotionSlider.stori
 import * as SearchBarStories from "../components/filters/SearchBar.stories";
 import * as TypeFilterStories from "../components/filters/TypeFilter.stories";
 import * as FilterPanelStories from "../components/filters/FilterPanel.stories";
+import * as VideoRecorderStories from "../components/video/VideoRecorder.stories";
+import * as VideoPlayerStories from "../components/video/VideoPlayer.stories";
 
 const allStories = {
   MoodBadge: MoodBadgeStories,
@@ -29,6 +31,8 @@ const allStories = {
   SearchBar: SearchBarStories,
   TypeFilter: TypeFilterStories,
   FilterPanel: FilterPanelStories,
+  VideoRecorder: VideoRecorderStories,
+  VideoPlayer: VideoPlayerStories,
 };
 
 /**
@@ -55,6 +59,9 @@ export default function StorybookUIRoot() {
     // Check if story has a custom render function
     const renderFunction = storyObj?.render;
 
+    // Check if this is a full-screen component (like VideoRecorder)
+    const isFullScreen = selectedComponent === "VideoRecorder";
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -71,15 +78,27 @@ export default function StorybookUIRoot() {
             {selectedComponent} / {selectedStory}
           </Text>
         </View>
-        <ScrollView style={styles.storyContainer}>
-          {renderFunction ? (
-            renderFunction(args)
-          ) : Component ? (
-            <Component {...args} />
-          ) : (
-            <Text style={styles.errorText}>Story not found</Text>
-          )}
-        </ScrollView>
+        {isFullScreen ? (
+          <View style={styles.fullScreenContainer}>
+            {renderFunction ? (
+              renderFunction(args)
+            ) : Component ? (
+              <Component {...args} />
+            ) : (
+              <Text style={styles.errorText}>Story not found</Text>
+            )}
+          </View>
+        ) : (
+          <ScrollView style={styles.storyContainer}>
+            {renderFunction ? (
+              renderFunction(args)
+            ) : Component ? (
+              <Component {...args} />
+            ) : (
+              <Text style={styles.errorText}>Story not found</Text>
+            )}
+          </ScrollView>
+        )}
       </View>
     );
   }
@@ -193,6 +212,9 @@ const styles = StyleSheet.create({
   storyContainer: {
     flex: 1,
     padding: spacing[4],
+  },
+  fullScreenContainer: {
+    flex: 1,
   },
   errorText: {
     fontSize: typography.fontSize.base,

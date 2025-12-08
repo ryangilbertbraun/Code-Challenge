@@ -18,6 +18,8 @@ import "./components/journal/EmotionVisualization.stories";
 import "./components/journal/EntryCard.stories";
 import "./components/journal/TextEntryDetail.stories";
 import "./components/journal/VideoEntryDetail.stories";
+import "./components/video/VideoRecorder.stories";
+import "./components/video/VideoPlayer.stories";
 
 const StorybookUI = view;
 
