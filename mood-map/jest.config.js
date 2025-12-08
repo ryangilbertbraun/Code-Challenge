@@ -1,4 +1,5 @@
 module.exports = {
+  preset: "jest-expo",
   testMatch: [
     "**/__tests__/**/*.test.[jt]s?(x)",
     "**/?(*.)+(spec|test).[jt]s?(x)",
@@ -6,12 +7,8 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
   },
-  testEnvironment: "node",
-  transform: {
-    "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
-  },
   transformIgnorePatterns: [
-    "node_modules/(?!(expo|expo-secure-store|@supabase|react-native|@react-native|react-native-url-polyfill)/)",
+    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@supabase|react-native-url-polyfill))",
   ],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 };

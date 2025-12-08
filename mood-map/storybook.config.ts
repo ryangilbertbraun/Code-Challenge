@@ -5,4 +5,4 @@
  * Set to false to run the normal app
  */
 
-export const ENABLE_STORYBOOK = true;
+export const ENABLE_STORYBOOK = false;

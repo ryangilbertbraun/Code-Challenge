@@ -121,40 +121,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   error: null,
 
   /**
-   * Initialize session from SecureStore on app start
+   * Initialize session from Supabase on app start
+   * Supabase handles persistence automatically via SecureStore adapter
    */
   initializeSession: async () => {
     set({ isLoading: true, error: null });
 
     try {
-      // First, try to get the current session from Supabase
+      // Get the current session from Supabase (which checks SecureStore automatically)
       const currentSession = await authService.getCurrentSession();
 
       if (currentSession) {
-        // Store in SecureStore for persistence
-        await storeSessionTokens(currentSession);
         set({ session: currentSession, isLoading: false });
-        return;
-      }
-
-      // If no current session, try to retrieve from SecureStore
-      const storedSession = await retrieveStoredSession();
-
-      if (storedSession) {
-        // Check if session is expired
-        const now = new Date();
-        if (storedSession.expiresAt > now) {
-          set({ session: storedSession, isLoading: false });
-        } else {
-          // Session expired, try to refresh
-          try {
-            await get().refreshSession();
-          } catch (error) {
-            // Refresh failed, clear stored session
-            await clearStoredSession();
-            set({ session: null, isLoading: false });
-          }
-        }
       } else {
         set({ session: null, isLoading: false });
       }
@@ -170,16 +148,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /**
    * Log in with email and password
+   * Supabase handles token storage automatically via SecureStore adapter
    */
   login: async (credentials: LoginCredentials) => {
     set({ isLoading: true, error: null });
 
     try {
       const session = await authService.login(credentials);
-
-      // Store tokens in SecureStore
-      await storeSessionTokens(session);
-
       set({ session, isLoading: false, error: null });
     } catch (error) {
       const appError = error as AppError;
@@ -194,16 +169,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /**
    * Sign up with email and password
+   * Supabase handles token storage automatically via SecureStore adapter
    */
   signup: async (credentials: SignupCredentials) => {
     set({ isLoading: true, error: null });
 
     try {
       const session = await authService.signup(credentials);
-
-      // Store tokens in SecureStore
-      await storeSessionTokens(session);
-
       set({ session, isLoading: false, error: null });
     } catch (error) {
       const appError = error as AppError;
@@ -218,21 +190,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /**
    * Log out the current user
+   * Supabase handles token cleanup automatically via SecureStore adapter
    */
   logout: async () => {
     set({ isLoading: true, error: null });
 
     try {
       await authService.logout();
-
-      // Clear tokens from SecureStore
-      await clearStoredSession();
-
       set({ session: null, isLoading: false, error: null });
     } catch (error) {
       const appError = error as AppError;
       // Even if logout fails, clear local session
-      await clearStoredSession();
       set({
         session: null,
         isLoading: false,
@@ -243,21 +211,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   /**
    * Refresh the current session
+   * Supabase handles token storage automatically via SecureStore adapter
    */
   refreshSession: async () => {
     set({ isLoading: true, error: null });
 
     try {
       const session = await authService.refreshSession();
-
-      // Store refreshed tokens in SecureStore
-      await storeSessionTokens(session);
-
       set({ session, isLoading: false, error: null });
     } catch (error) {
       const appError = error as AppError;
       // If refresh fails, clear session
-      await clearStoredSession();
       set({
         session: null,
         isLoading: false,
