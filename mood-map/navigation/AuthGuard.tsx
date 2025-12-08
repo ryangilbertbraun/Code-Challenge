@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSegments } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -15,10 +15,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { session, isLoading } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   useEffect(() => {
-    // Don't redirect while loading session
-    if (isLoading) {
+    // Mark navigation as ready after first render
+    setIsNavigationReady(true);
+  }, []);
+
+  useEffect(() => {
+    // Don't redirect while loading session or before navigation is ready
+    if (isLoading || !isNavigationReady) {
       return;
     }
 
@@ -36,7 +42,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       // Redirect to main app
       router.replace("/(tabs)");
     }
-  }, [session, segments, isLoading, router]);
+  }, [session, segments, isLoading, router, isNavigationReady]);
 
   return <>{children}</>;
 }

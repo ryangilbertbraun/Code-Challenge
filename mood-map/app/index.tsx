@@ -1,6 +1,8 @@
 import { Redirect } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";
 import { View, ActivityIndicator } from "react-native";
+import { ENABLE_STORYBOOK } from "../storybook.config";
+import StorybookUIRoot from "../.storybook/Storybook";
 
 /**
  * Index route that handles initial navigation
@@ -14,6 +16,11 @@ import { View, ActivityIndicator } from "react-native";
  * Requirements: 2.6, 2.7
  */
 export default function Index() {
+  // Enable Storybook mode for component development
+  if (ENABLE_STORYBOOK) {
+    return <StorybookUIRoot />;
+  }
+
   const { session, isLoading } = useAuthStore();
 
   // Show loading indicator while initializing session

@@ -63,17 +63,17 @@ export default function AuthScreen() {
 
   const getOptionsHeight = () => {
     if (height < 700) {
-      return hp("55%"); // Balanced space for very small screens
+      return hp("68%"); // Balanced space for very small screens
     }
     if (height < 800) {
-      return hp("50%"); // Balanced space for small screens
+      return hp("70%"); // Balanced space for small screens
     }
     return hp("44%"); // Slightly taller for larger screens
   };
 
   const getFormHeight = () => {
     if (height < 700) {
-      return hp("62%"); // Balanced space for very small screens
+      return hp("76%"); // Balanced space for very small screens
     }
     if (height < 800) {
       return hp("56%"); // Balanced space for small screens
@@ -230,7 +230,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.fullscreen}>
+    <SafeAreaView style={styles.fullscreen} edges={["bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}

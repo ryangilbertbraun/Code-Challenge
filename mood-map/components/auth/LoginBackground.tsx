@@ -37,7 +37,7 @@ const LoginBackground: React.FC<LoginBackgroundProps> = ({
 
   return (
     <>
-      {/* Background Video */}
+      {/* Background Video - Full screen, extends into safe areas */}
       <VideoView
         player={player}
         style={StyleSheet.absoluteFill}
@@ -45,6 +45,7 @@ const LoginBackground: React.FC<LoginBackgroundProps> = ({
         nativeControls={false}
       />
 
+      {/* Overlays - positioned absolutely, no SafeAreaView wrapper */}
       <Animated.View style={[styles.baseOverlay]} />
 
       <LinearGradient
