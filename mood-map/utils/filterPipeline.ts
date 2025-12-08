@@ -37,7 +37,7 @@ export function applyFilterPipeline(
  * Apply emotion range filters to entries
  * Uses AND logic - entries must match ALL emotion criteria
  * Note: Only filters entries that have completed analysis
- * Entries without analysis (pending/loading/error) are shown by default
+ * Entries without completed analysis are excluded when emotion filters are active
  */
 export function applyEmotionFilters(
   entries: JournalEntry[],
@@ -64,12 +64,12 @@ export function applyEmotionFilters(
     if (entry.type === EntryType.TEXT) {
       const textEntry = entry as TextEntry;
 
-      // Include entries without analysis (they're still being processed)
+      // Exclude entries without completed analysis when filters are active
       if (
         !textEntry.moodMetadata ||
         textEntry.analysisStatus !== AnalysisStatus.SUCCESS
       ) {
-        return true; // Show entries without analysis
+        return false; // Hide entries without completed analysis
       }
 
       const { moodMetadata } = textEntry;
@@ -87,12 +87,12 @@ export function applyEmotionFilters(
     if (entry.type === EntryType.VIDEO) {
       const videoEntry = entry as VideoEntry;
 
-      // Include entries without analysis (they're still being processed)
+      // Exclude entries without completed analysis when filters are active
       if (
         !videoEntry.humeEmotionData ||
         videoEntry.analysisStatus !== AnalysisStatus.SUCCESS
       ) {
-        return true; // Show entries without analysis
+        return false; // Hide entries without completed analysis
       }
 
       // Extract emotion scores from Hume data

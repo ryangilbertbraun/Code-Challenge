@@ -28,6 +28,7 @@ import ActivityCalendar from "@/components/journal/ActivityCalendar";
 import JournalStats from "@/components/journal/JournalStats";
 import QuickActions from "@/components/journal/QuickActions";
 import FilterPanel from "@/components/filters/FilterPanel";
+import SearchBar from "@/components/filters/SearchBar";
 import { JournalEntry } from "@/types/entry.types";
 
 interface SectionData {
@@ -52,7 +53,7 @@ interface SectionData {
 const JournalListScreen: React.FC = () => {
   const router = useRouter();
   const { entries, isLoading, error, fetchEntries } = useEntryStore();
-  const { filters } = useFilterStore();
+  const { filters, setSearchText } = useFilterStore();
   const [refreshing, setRefreshing] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -261,6 +262,14 @@ const JournalListScreen: React.FC = () => {
             {hasActiveFilters && <View style={styles.filterBadge} />}
           </TouchableOpacity>
         </View>
+
+        <View style={styles.searchBarContainer}>
+          <SearchBar
+            value={filters.searchText}
+            onSearchChange={setSearchText}
+          />
+        </View>
+
         <View style={styles.centerContainer}>
           <Text style={styles.emptyTitle}>
             {hasActiveFilters ? "No matching entries" : "No entries yet"}
@@ -278,6 +287,22 @@ const JournalListScreen: React.FC = () => {
         >
           <Ionicons name="add" size={32} color={colors.textPrimary} />
         </TouchableOpacity>
+
+        <Modal
+          visible={showFilterModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={handleFilterClose}
+        >
+          <SafeAreaView style={styles.modalContainer} edges={["top"]}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={handleFilterClose}>
+                <Text style={styles.modalCloseText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <FilterPanel />
+          </SafeAreaView>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -313,6 +338,13 @@ const JournalListScreen: React.FC = () => {
             />
             {hasActiveFilters && <View style={styles.filterBadge} />}
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchBarContainer}>
+          <SearchBar
+            value={filters.searchText}
+            onSearchChange={setSearchText}
+          />
         </View>
 
         <SectionList
@@ -467,6 +499,13 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.primary[500],
+  },
+  searchBarContainer: {
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[3],
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[200],
   },
   dashboardContent: {
     padding: spacing[4],

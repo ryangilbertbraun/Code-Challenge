@@ -10,7 +10,6 @@ import { colors, typography, spacing } from "@/constants/theme";
 import { animations } from "@/constants/animations";
 import { useFilterStore } from "@/stores/filterStore";
 import EmotionSlider from "./EmotionSlider";
-import SearchBar from "./SearchBar";
 import TypeFilter from "./TypeFilter";
 
 /**
@@ -21,13 +20,8 @@ import TypeFilter from "./TypeFilter";
  * Includes a clear filters button to reset all filters to defaults.
  */
 const FilterPanel: React.FC = () => {
-  const {
-    filters,
-    setEmotionRange,
-    setEntryTypes,
-    setSearchText,
-    resetFilters,
-  } = useFilterStore();
+  const { filters, setEmotionRange, setEntryTypes, resetFilters } =
+    useFilterStore();
 
   const isFiltersActive =
     filters.happiness.min !== 0 ||
@@ -38,7 +32,6 @@ const FilterPanel: React.FC = () => {
     filters.sadness.max !== 1 ||
     filters.anger.min !== 0 ||
     filters.anger.max !== 1 ||
-    filters.searchText !== "" ||
     filters.entryTypes.length !== 2;
 
   return (
@@ -60,8 +53,6 @@ const FilterPanel: React.FC = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        <SearchBar value={filters.searchText} onSearchChange={setSearchText} />
-
         <TypeFilter
           selectedTypes={filters.entryTypes}
           onTypesChange={setEntryTypes}
