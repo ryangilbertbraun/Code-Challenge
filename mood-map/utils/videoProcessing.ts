@@ -1,4 +1,4 @@
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 
 /**
@@ -50,7 +50,6 @@ export async function compressVideo(
     // 2. react-native-video-processing
     // 3. Backend processing
 
-    console.log(`Video compression requested with quality ${quality}`);
     return videoUri;
   } catch (error) {
     console.error("Error compressing video:", error);
@@ -66,8 +65,13 @@ export async function compressVideo(
 export async function getVideoFileSize(videoUri: string): Promise<number> {
   try {
     const fileInfo = await FileSystem.getInfoAsync(videoUri);
-    if (fileInfo.exists && "size" in fileInfo) {
-      return fileInfo.size;
+    // Check if file exists and has size property
+    if (fileInfo.exists) {
+      // Type guard to check if size property exists
+      const fileInfoWithSize = fileInfo as FileSystem.FileInfo & {
+        size?: number;
+      };
+      return fileInfoWithSize.size || 0;
     }
     return 0;
   } catch (error) {
@@ -108,7 +112,14 @@ export async function validateVideoFile(
       return { valid: false, error: "Video file does not exist" };
     }
 
-    if ("size" in fileInfo && fileInfo.size > maxSizeBytes) {
+    // Type guard to check if size property exists
+    const fileInfoWithSize = fileInfo as FileSystem.FileInfo & {
+      size?: number;
+    };
+    if (
+      fileInfoWithSize.size !== undefined &&
+      fileInfoWithSize.size > maxSizeBytes
+    ) {
       return {
         valid: false,
         error: `Video file is too large. Maximum size is ${formatFileSize(

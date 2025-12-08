@@ -36,22 +36,40 @@ export function applyFilterPipeline(
 /**
  * Apply emotion range filters to entries
  * Uses AND logic - entries must match ALL emotion criteria
+ * Note: Only filters entries that have completed analysis
+ * Entries without analysis (pending/loading/error) are shown by default
  */
 export function applyEmotionFilters(
   entries: JournalEntry[],
   filters: FilterState
 ): JournalEntry[] {
+  // Check if filters are at default values (all emotions 0-1)
+  const isDefaultFilters =
+    filters.happiness.min === 0 &&
+    filters.happiness.max === 1 &&
+    filters.fear.min === 0 &&
+    filters.fear.max === 1 &&
+    filters.sadness.min === 0 &&
+    filters.sadness.max === 1 &&
+    filters.anger.min === 0 &&
+    filters.anger.max === 1;
+
+  // If filters are at default, return all entries (no filtering)
+  if (isDefaultFilters) {
+    return entries;
+  }
+
   return entries.filter((entry) => {
     // Text entries: check mood metadata
     if (entry.type === EntryType.TEXT) {
       const textEntry = entry as TextEntry;
 
-      // Skip entries without mood metadata or not successfully analyzed
+      // Include entries without analysis (they're still being processed)
       if (
         !textEntry.moodMetadata ||
         textEntry.analysisStatus !== AnalysisStatus.SUCCESS
       ) {
-        return false;
+        return true; // Show entries without analysis
       }
 
       const { moodMetadata } = textEntry;
@@ -69,12 +87,12 @@ export function applyEmotionFilters(
     if (entry.type === EntryType.VIDEO) {
       const videoEntry = entry as VideoEntry;
 
-      // Skip entries without emotion data or not successfully analyzed
+      // Include entries without analysis (they're still being processed)
       if (
         !videoEntry.humeEmotionData ||
         videoEntry.analysisStatus !== AnalysisStatus.SUCCESS
       ) {
-        return false;
+        return true; // Show entries without analysis
       }
 
       // Extract emotion scores from Hume data
@@ -91,7 +109,7 @@ export function applyEmotionFilters(
       );
     }
 
-    return false;
+    return true; // Show unknown entry types by default
   });
 }
 

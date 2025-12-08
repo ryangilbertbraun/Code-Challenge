@@ -42,6 +42,11 @@ export default function RootLayout() {
             name="modal"
             options={{ presentation: "modal", title: "Modal" }}
           />
+          <Stack.Screen
+            name="create-entry"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen name="entry-detail" options={{ headerShown: false }} />
         </Stack>
       </AuthGuard>
       <StatusBar style="auto" />

@@ -28,6 +28,10 @@ export function RootNavigator() {
         name="modal"
         options={{ presentation: "modal", title: "Modal" }}
       />
+      <Stack.Screen
+        name="create-entry"
+        options={{ presentation: "modal", headerShown: false }}
+      />
     </Stack>
   );
 }

@@ -26,8 +26,9 @@ interface EntryStore {
   // Actions
   fetchEntries: () => Promise<void>;
   createTextEntry: (content: string) => Promise<void>;
-  createVideoEntry: (videoBlob: Blob) => Promise<void>;
+  createVideoEntry: (videoUri: string, duration?: number) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
+  checkVideoAnalysis: (entryId: string) => Promise<void>;
   updateEntryAnalysis: (
     id: string,
     analysis: MoodMetadata | HumeEmotionData,
@@ -65,30 +66,42 @@ async function triggerTextAnalysis(
 }
 
 /**
- * Triggers Hume video analysis for a video entry
- * Updates the entry with analysis results or error status
+ * Checks Hume video analysis status for a video entry
+ * Called on-demand when user views the entry
+ * Updates the entry with analysis results if complete
  */
-async function triggerVideoAnalysis(
+async function checkVideoAnalysisStatus(
   entryId: string,
-  videoBlob: Blob,
+  humeJobId: string,
   updateFn: (
     id: string,
     analysis: MoodMetadata | HumeEmotionData,
     status: AnalysisStatus
   ) => void
-): Promise<void> {
+): Promise<{ success: boolean; message: string }> {
   try {
-    // Attempt analysis with retry logic
-    const humeEmotionData = await withRetry(async () => {
-      return await humeService.analyzeVideo(videoBlob);
-    });
+    const result = await humeService.checkJobStatus(humeJobId);
 
-    // Update entry with successful analysis
-    updateFn(entryId, humeEmotionData, AnalysisStatus.SUCCESS);
+    if (result) {
+      // Analysis complete - update entry with results
+      updateFn(entryId, result, AnalysisStatus.SUCCESS);
+      return {
+        success: true,
+        message: "Analysis complete! Emotion data is now available.",
+      };
+    } else {
+      // Still processing - keep LOADING status
+      return {
+        success: false,
+        message: "Analysis is still processing. Please check back in a minute.",
+      };
+    }
   } catch (error) {
-    console.error("Failed to analyze video entry:", error);
-    // Update entry with error status
-    updateFn(entryId, {} as HumeEmotionData, AnalysisStatus.ERROR);
+    console.error("Failed to check Hume job status:", error);
+    return {
+      success: false,
+      message: "Unable to check status. Please try again.",
+    };
   }
 }
 
@@ -144,7 +157,6 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       }));
 
       // Trigger AI analysis in background (non-blocking)
-      // Note: We don't have the videoBlob for text entries, so we pass the content
       triggerTextAnalysis(newEntry.id, content, get().updateEntryAnalysis);
     } catch (error) {
       const appError = error as AppError;
@@ -160,12 +172,12 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
    * Create a new video journal entry with optimistic UI
    * Immediately shows entry with loading status, then triggers Hume analysis
    */
-  createVideoEntry: async (videoBlob: Blob) => {
+  createVideoEntry: async (videoUri: string, duration?: number) => {
     set({ isLoading: true, error: null });
 
     try {
       // Create entry in database
-      const newEntry = await entryService.createVideoEntry(videoBlob);
+      const newEntry = await entryService.createVideoEntry(videoUri, duration);
 
       // Optimistic UI: Add entry immediately with LOADING status
       const optimisticEntry: VideoEntry = {
@@ -179,8 +191,8 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
         error: null,
       }));
 
-      // Trigger Hume analysis in background (non-blocking)
-      triggerVideoAnalysis(newEntry.id, videoBlob, get().updateEntryAnalysis);
+      // Note: Hume analysis status will be checked on-demand when user views the entry
+      // No automatic polling to save resources
     } catch (error) {
       const appError = error as AppError;
       set({
@@ -189,6 +201,37 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       });
       throw error;
     }
+  },
+
+  /**
+   * Check video analysis status for a specific entry
+   * Called when user views a video entry to get latest analysis results
+   * Returns a result object with success status and message
+   */
+  checkVideoAnalysis: async (
+    entryId: string
+  ): Promise<{ success: boolean; message: string } | null> => {
+    const entry = get().entries.find((e) => e.id === entryId);
+
+    if (!entry || entry.type !== EntryType.VIDEO) {
+      console.warn("Entry not found or not a video entry:", entryId);
+      return null;
+    }
+
+    // Only check if we have a job ID and status is LOADING or PENDING
+    if (
+      entry.humeJobId &&
+      (entry.analysisStatus === AnalysisStatus.LOADING ||
+        entry.analysisStatus === AnalysisStatus.PENDING)
+    ) {
+      return await checkVideoAnalysisStatus(
+        entryId,
+        entry.humeJobId,
+        get().updateEntryAnalysis
+      );
+    }
+
+    return null;
   },
 
   /**
@@ -219,12 +262,14 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
   /**
    * Update an entry with analysis results
    * Called after AI/Hume analysis completes
+   * Persists to database for video entries
    */
   updateEntryAnalysis: (
     id: string,
     analysis: MoodMetadata | HumeEmotionData,
     status: AnalysisStatus
   ) => {
+    // Update local state immediately
     set((state) => ({
       entries: state.entries.map((entry) => {
         if (entry.id !== id) {
@@ -233,6 +278,15 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
         // Update text entry with mood metadata
         if (entry.type === EntryType.TEXT) {
+          // Persist to database in background
+          if (status === AnalysisStatus.SUCCESS) {
+            entryService
+              .updateTextAnalysis(id, analysis as MoodMetadata, status)
+              .catch((error) => {
+                console.error("Failed to persist text analysis:", error);
+              });
+          }
+
           return {
             ...entry,
             moodMetadata:
@@ -245,6 +299,15 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
 
         // Update video entry with Hume emotion data
         if (entry.type === EntryType.VIDEO) {
+          // Persist to database in background
+          if (status === AnalysisStatus.SUCCESS) {
+            entryService
+              .updateVideoAnalysis(id, analysis as HumeEmotionData, status)
+              .catch((error) => {
+                console.error("Failed to persist video analysis:", error);
+              });
+          }
+
           return {
             ...entry,
             humeEmotionData:

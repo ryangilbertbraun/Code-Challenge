@@ -7,9 +7,11 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
+import { Video, ResizeMode } from "expo-av";
 import { colors, typography, spacing } from "@/constants/theme";
 import { JournalEntry, EntryType, AnalysisStatus } from "@/types/entry.types";
 import EmotionVisualization from "./EmotionVisualization";
+import { Ionicons } from "@expo/vector-icons";
 
 interface EntryCardProps {
   entry: JournalEntry;
@@ -79,11 +81,23 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
     return (
       <>
         <View style={styles.videoPreview}>
-          <Image
-            source={{ uri: entry.thumbnailUrl }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
+          {/* Show video first frame as thumbnail */}
+          {entry.videoUrl ? (
+            <Video
+              source={{ uri: entry.videoUrl }}
+              style={styles.thumbnail}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay={false}
+              isLooping={false}
+              isMuted={true}
+              positionMillis={0}
+              onError={(error) => console.log("Video thumbnail error:", error)}
+            />
+          ) : (
+            <View style={styles.thumbnailPlaceholder}>
+              <Text style={styles.placeholderText}>No video URL</Text>
+            </View>
+          )}
           <View style={styles.videoDuration}>
             <Text style={styles.durationText}>
               {Math.floor(entry.duration / 60)}:
@@ -91,20 +105,22 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, onPress }) => {
             </Text>
           </View>
         </View>
-        {entry.analysisStatus === AnalysisStatus.LOADING && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={colors.primary[400]} />
-            <Text style={styles.loadingText}>Analyzing emotions...</Text>
+        {(entry.analysisStatus === AnalysisStatus.LOADING ||
+          entry.analysisStatus === AnalysisStatus.PENDING) && (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>⏳ Analysis in progress</Text>
           </View>
         )}
         {entry.analysisStatus === AnalysisStatus.SUCCESS &&
           entry.humeEmotionData && (
-            <View style={styles.humePreview}>
-              <Text style={styles.humeLabel}>Emotion data available</Text>
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusBadgeText}>✓ Emotion data ready</Text>
             </View>
           )}
         {entry.analysisStatus === AnalysisStatus.ERROR && (
-          <Text style={styles.errorText}>Analysis unavailable</Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>⏳ Still processing</Text>
+          </View>
         )}
       </>
     );
@@ -181,6 +197,19 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  thumbnailPlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.neutral[100],
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  placeholderText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.fontWeight.medium,
+  },
   videoDuration: {
     position: "absolute",
     bottom: spacing[2],
@@ -193,6 +222,20 @@ const styles = StyleSheet.create({
   durationText: {
     fontSize: typography.fontSize.xs,
     color: colors.background,
+    fontWeight: typography.fontWeight.medium,
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    paddingVertical: spacing[1],
+    paddingHorizontal: spacing[3],
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+  },
+  statusBadgeText: {
+    fontSize: typography.fontSize.xs,
+    color: colors.textSecondary,
     fontWeight: typography.fontWeight.medium,
   },
   loadingContainer: {

@@ -5,6 +5,8 @@ import {
   VideoEntry,
   EntryType,
   AnalysisStatus,
+  HumeEmotionData,
+  MoodMetadata,
 } from "@/types/entry.types";
 import { AppError, ErrorCode } from "@/types/error.types";
 import { withRetry } from "@/utils/retry";
@@ -14,10 +16,20 @@ import { withRetry } from "@/utils/retry";
  */
 export interface IEntryService {
   createTextEntry(content: string): Promise<TextEntry>;
-  createVideoEntry(videoBlob: Blob): Promise<VideoEntry>;
+  createVideoEntry(videoUri: string, duration?: number): Promise<VideoEntry>;
   getEntries(): Promise<JournalEntry[]>;
   getEntryById(id: string): Promise<JournalEntry>;
   deleteEntry(id: string): Promise<void>;
+  updateTextAnalysis(
+    entryId: string,
+    moodMetadata: MoodMetadata,
+    status: AnalysisStatus
+  ): Promise<void>;
+  updateVideoAnalysis(
+    entryId: string,
+    humeEmotionData: HumeEmotionData,
+    status: AnalysisStatus
+  ): Promise<void>;
 }
 
 /**
@@ -131,6 +143,7 @@ function toVideoEntry(row: any): VideoEntry {
     thumbnailUrl: row.thumbnail_url,
     duration: row.duration,
     humeEmotionData: row.hume_emotion_data,
+    humeJobId: row.hume_job_id,
     analysisStatus: row.analysis_status as AnalysisStatus,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -222,7 +235,10 @@ class EntryService implements IEntryService {
   /**
    * Create a new video journal entry
    */
-  async createVideoEntry(videoBlob: Blob): Promise<VideoEntry> {
+  async createVideoEntry(
+    videoUri: string,
+    duration?: number
+  ): Promise<VideoEntry> {
     try {
       // Get current user
       const {
@@ -240,18 +256,48 @@ class EntryService implements IEntryService {
 
       // Upload video to Supabase Storage with retry
       const fileName = `${user.id}/${Date.now()}.mp4`;
-      const uploadResult = await withRetry(async () => {
-        const { data, error } = await supabase.storage
-          .from("videos")
-          .upload(fileName, videoBlob, {
-            contentType: "video/mp4",
-          });
 
-        if (error) {
-          throw mapDatabaseError(error);
+      const uploadResult = await withRetry(async () => {
+        // Detect the actual file type from the URI
+        const fileExtension = videoUri.split(".").pop()?.toLowerCase() || "mp4";
+        const mimeType =
+          fileExtension === "mov" ? "video/quicktime" : "video/mp4";
+
+        // Get the Supabase session for auth
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("No active session");
         }
 
-        return data;
+        // Use Supabase Storage REST API with FormData
+        const formData = new FormData();
+        formData.append("", {
+          uri: videoUri,
+          type: mimeType,
+          name: fileName.split("/").pop() || `video.${fileExtension}`,
+        } as any);
+
+        const supabaseUrl = supabase.storage
+          .from("videos")
+          .getPublicUrl("")
+          .data.publicUrl.split("/object/public/videos/")[0];
+        const uploadUrl = `${supabaseUrl}/object/videos/${fileName}`;
+
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status}`);
+        }
+
+        return { path: fileName };
       });
 
       // Get public URL for the video

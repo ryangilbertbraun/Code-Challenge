@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,12 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { colors, typography, spacing } from "@/constants/theme";
 import { VideoEntry, AnalysisStatus } from "@/types/entry.types";
+import { useEntryStore } from "@/stores/entryStore";
 
 interface VideoEntryDetailProps {
   entry: VideoEntry;
@@ -23,7 +25,26 @@ interface VideoEntryDetailProps {
  */
 const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const videoRef = React.useRef<Video>(null);
+  const { checkVideoAnalysis } = useEntryStore();
+
+  // Check analysis status when component mounts or when entry status changes
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (
+        entry.humeJobId &&
+        (entry.analysisStatus === AnalysisStatus.LOADING ||
+          entry.analysisStatus === AnalysisStatus.PENDING)
+      ) {
+        setIsCheckingStatus(true);
+        await checkVideoAnalysis(entry.id);
+        setIsCheckingStatus(false);
+      }
+    };
+
+    checkStatus();
+  }, [entry.id, entry.analysisStatus, entry.humeJobId, checkVideoAnalysis]);
 
   const formatDate = (date: Date) => {
     const entryDate = new Date(date);
@@ -150,12 +171,34 @@ const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
         {entry.analysisStatus === AnalysisStatus.LOADING && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary[400]} />
-            <Text style={styles.loadingText}>
-              Analyzing facial expressions and vocal tone...
-            </Text>
+            <Text style={styles.loadingText}>Processing video analysis</Text>
             <Text style={styles.loadingSubtext}>
-              This may take a minute or two
+              Your video is being analyzed in the background. This typically
+              takes 1-3 minutes. You can close this screen and check back later.
             </Text>
+            <TouchableOpacity
+              style={styles.checkButton}
+              onPress={async () => {
+                setIsCheckingStatus(true);
+                const result = await checkVideoAnalysis(entry.id);
+                setIsCheckingStatus(false);
+
+                if (result) {
+                  Alert.alert(
+                    result.success ? "Status Update" : "Still Processing",
+                    result.message,
+                    [{ text: "OK" }]
+                  );
+                }
+              }}
+              disabled={isCheckingStatus}
+            >
+              {isCheckingStatus ? (
+                <ActivityIndicator size="small" color={colors.background} />
+              ) : (
+                <Text style={styles.checkButtonText}>Check Status</Text>
+              )}
+            </TouchableOpacity>
           </View>
         )}
 
@@ -165,18 +208,28 @@ const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
 
         {entry.analysisStatus === AnalysisStatus.ERROR && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Analysis Unavailable</Text>
+            <Text style={styles.errorTitle}>
+              Analysis Taking Longer Than Expected
+            </Text>
             <Text style={styles.errorMessage}>
-              We couldn't analyze the emotional content of this video. The video
-              has been saved, but emotion data is not available.
+              Video analysis is still processing in the background. This can
+              sometimes take up to 5 minutes for longer videos. Check back soon
+              to see your emotion insights.
+            </Text>
+            <Text style={styles.errorNote}>
+              Your video has been saved and you can watch it anytime.
             </Text>
           </View>
         )}
 
         {entry.analysisStatus === AnalysisStatus.PENDING && (
           <View style={styles.pendingContainer}>
+            <ActivityIndicator size="small" color={colors.primary[400]} />
             <Text style={styles.pendingText}>
-              Emotion analysis will begin shortly...
+              Preparing video for analysis...
+            </Text>
+            <Text style={styles.pendingSubtext}>
+              Analysis will begin shortly
             </Text>
           </View>
         )}
@@ -242,36 +295,66 @@ const styles = StyleSheet.create({
   loadingSubtext: {
     fontSize: typography.fontSize.sm,
     color: colors.textSecondary,
-    marginTop: spacing[1],
+    marginTop: spacing[2],
+    textAlign: "center",
+    lineHeight: typography.fontSize.sm * typography.lineHeight.relaxed,
+  },
+  checkButton: {
+    marginTop: spacing[4],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[6],
+    backgroundColor: colors.primary[400],
+    borderRadius: 12,
+    minWidth: 140,
+    alignItems: "center",
+  },
+  checkButtonText: {
+    fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.background,
   },
   errorContainer: {
     padding: spacing[4],
     backgroundColor: colors.backgroundSecondary,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.error,
+    borderColor: colors.primary[200],
   },
   errorTitle: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semibold,
-    color: colors.error,
+    color: colors.textPrimary,
     marginBottom: spacing[2],
   },
   errorMessage: {
     fontSize: typography.fontSize.base,
-    lineHeight: typography.fontSize.base * typography.lineHeight.normal,
+    lineHeight: typography.fontSize.base * typography.lineHeight.relaxed,
     color: colors.textSecondary,
+    marginBottom: spacing[2],
+  },
+  errorNote: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textTertiary,
+    fontStyle: "italic",
+    lineHeight: typography.fontSize.sm * typography.lineHeight.relaxed,
   },
   pendingContainer: {
     padding: spacing[4],
     backgroundColor: colors.backgroundSecondary,
     borderRadius: 16,
     alignItems: "center",
+    gap: spacing[2],
   },
   pendingText: {
     fontSize: typography.fontSize.base,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.textPrimary,
+    textAlign: "center",
+  },
+  pendingSubtext: {
+    fontSize: typography.fontSize.sm,
     color: colors.textSecondary,
-    fontStyle: "italic",
+    textAlign: "center",
   },
   humeContainer: {
     backgroundColor: colors.background,

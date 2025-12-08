@@ -58,6 +58,7 @@ export interface VideoEntry extends BaseEntry {
   thumbnailUrl: string;
   duration: number;
   humeEmotionData: HumeEmotionData | null;
+  humeJobId?: string | null; // Hume API job ID for async tracking
   analysisStatus: AnalysisStatus;
 }
 

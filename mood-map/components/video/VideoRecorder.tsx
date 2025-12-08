@@ -125,6 +125,11 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
   const handleRecordingComplete = async (videoUri: string) => {
     setIsProcessing(true);
 
+    // Calculate duration from start time (more reliable than state)
+    const actualDuration = recordingStartTimeRef.current
+      ? Math.floor((Date.now() - recordingStartTimeRef.current) / 1000)
+      : recordingDuration;
+
     try {
       // Validate video file
       const validation = await validateVideoFile(videoUri);
@@ -142,9 +147,8 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
 
       // Generate thumbnail
       const thumbnailUri = await generateVideoThumbnail(compressedUri);
-      const duration = recordingDuration;
 
-      onRecordingComplete(compressedUri, thumbnailUri, duration);
+      onRecordingComplete(compressedUri, thumbnailUri, actualDuration);
     } catch (error) {
       console.error("Error processing video:", error);
       Alert.alert(

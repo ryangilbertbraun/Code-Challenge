@@ -9,6 +9,8 @@ import { withRetry } from "@/utils/retry";
  */
 export interface IHumeService {
   analyzeVideo(videoBlob: Blob): Promise<HumeEmotionData>;
+  submitAnalysisJob(videoUrl: string): Promise<string>; // Returns job ID
+  checkJobStatus(jobId: string): Promise<HumeEmotionData | null>; // Returns data if complete, null if still processing
 }
 
 /**
@@ -67,10 +69,24 @@ class HumeService implements IHumeService {
    */
   private async uploadVideoToStorage(videoBlob: Blob): Promise<string> {
     try {
-      // Generate unique filename
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw {
+          code: ErrorCode.AUTH_SESSION_EXPIRED,
+          message: "You must be logged in to upload videos",
+          retryable: false,
+        } as AppError;
+      }
+
+      // Generate unique filename with user ID prefix (for RLS)
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(7);
-      const filename = `videos/${timestamp}-${randomId}.mp4`;
+      const filename = `${user.id}/${timestamp}-${randomId}.mp4`;
 
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
@@ -290,6 +306,25 @@ class HumeService implements IHumeService {
   }
 
   /**
+   * Analyzes a video by URL using Hume Expression Measurement API
+   * @param videoUrl The public URL of the video to analyze
+   * @returns HumeEmotionData with raw emotion metrics
+   * @throws AppError if analysis fails
+   */
+  async analyzeVideoByUrl(videoUrl: string): Promise<HumeEmotionData> {
+    // Use retry logic for the entire analysis pipeline
+    return withRetry(async () => {
+      // Step 1: Submit job to Hume API with the existing video URL
+      const jobId = await this.submitHumeJob(videoUrl);
+
+      // Step 2: Poll for results
+      const emotionData = await this.pollForResults(jobId);
+
+      return emotionData;
+    });
+  }
+
+  /**
    * Analyzes a video for emotional content using Hume Expression Measurement API
    * @param videoBlob The video blob to analyze
    * @returns HumeEmotionData with raw emotion metrics
@@ -309,6 +344,88 @@ class HumeService implements IHumeService {
 
       return emotionData;
     });
+  }
+
+  /**
+   * Analyzes a video by URL (avoids duplicate upload)
+   * @param videoUrl The public URL of the video to analyze
+   * @returns HumeEmotionData with raw emotion metrics
+   * @throws AppError if analysis fails
+   */
+  async analyzeVideoByUrl(videoUrl: string): Promise<HumeEmotionData> {
+    // Use retry logic for the analysis pipeline
+    return withRetry(async () => {
+      // Step 1: Submit job to Hume API with existing URL
+      const jobId = await this.submitHumeJob(videoUrl);
+
+      // Step 2: Poll for results
+      const emotionData = await this.pollForResults(jobId);
+
+      return emotionData;
+    });
+  }
+
+  /**
+   * Submits a video analysis job without waiting for results
+   * Use this for async processing where you'll check status later
+   * @param videoUrl The public URL of the video to analyze
+   * @returns The Hume job ID for later status checking
+   * @throws AppError if submission fails
+   */
+  async submitAnalysisJob(videoUrl: string): Promise<string> {
+    return withRetry(async () => {
+      return await this.submitHumeJob(videoUrl);
+    });
+  }
+
+  /**
+   * Checks the status of a Hume analysis job
+   * @param jobId The Hume job ID to check
+   * @returns HumeEmotionData if complete, null if still processing
+   * @throws AppError if job failed or checking status failed
+   */
+  async checkJobStatus(jobId: string): Promise<HumeEmotionData | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/batch/jobs/${jobId}`, {
+        method: "GET",
+        headers: {
+          "X-Hume-Api-Key": this.apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Hume API returned ${response.status}: ${errorText}`);
+      }
+
+      const status: HumeJobStatus = await response.json();
+
+      if (status.status === "COMPLETED") {
+        return this.extractEmotionData(status);
+      }
+
+      if (status.status === "FAILED") {
+        throw {
+          code: ErrorCode.ANALYSIS_HUME_FAILED,
+          message: `Hume job failed: ${status.error || "Unknown error"}`,
+          retryable: false,
+        } as AppError;
+      }
+
+      // Still processing (QUEUED or IN_PROGRESS)
+      return null;
+    } catch (error) {
+      if ((error as AppError).code) {
+        throw error;
+      }
+
+      throw {
+        code: ErrorCode.ANALYSIS_HUME_FAILED,
+        message: "Failed to check Hume job status",
+        details: error,
+        retryable: true,
+      } as AppError;
+    }
   }
 }
 
