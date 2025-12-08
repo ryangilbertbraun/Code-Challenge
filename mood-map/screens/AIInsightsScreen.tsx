@@ -29,7 +29,7 @@ export default function AIInsightsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>🧠 AI Insights</Text>
+          <Text style={styles.heroTitle}> AI Insights</Text>
           <Text style={styles.heroSubtitle}>
             Get personalized analysis of your emotional journey
           </Text>
@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize["3xl"],
     fontWeight: typography.fontWeight.bold,
     color: colors.textPrimary,
+    marginTop: 20,
   },
   heroSubtitle: {
     fontSize: typography.fontSize.base,
