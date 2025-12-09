@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:integration": "jest --config jest.config.integration.js",
     "lint": "expo lint"
   },
   "dependencies": {

@@ -31,8 +31,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
   opacity,
   height,
   onLogin,
-  onGoogleLogin,
-  onAppleLogin,
   animateTransitionBack,
   loading = false,
   error,

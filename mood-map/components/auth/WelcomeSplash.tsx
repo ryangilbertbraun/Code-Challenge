@@ -11,7 +11,6 @@ interface WelcomeSplashProps {
  * WelcomeSplash Component
  *
  * Initial splash screen with welcome message and action buttons.
- * Matches the reference mobile app's WelcomeSplash component exactly.
  */
 const WelcomeSplash: React.FC<WelcomeSplashProps> = ({
   height,

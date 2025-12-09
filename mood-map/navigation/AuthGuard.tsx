@@ -9,7 +9,6 @@ import { useAuthStore } from "@/stores/authStore";
  * that unauthenticated users are redirected to the login screen, and authenticated
  * users are redirected away from auth screens.
  *
- * Requirements: 2.6, 2.7
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { session, isLoading } = useAuthStore();
