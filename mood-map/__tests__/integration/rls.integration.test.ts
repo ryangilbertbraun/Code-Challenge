@@ -228,16 +228,21 @@ describe("Row Level Security Integration Tests", () => {
    */
   describe("User cannot update another user's entry", () => {
     it("should reject user B's attempt to update user A's entry", async () => {
+      // Switch to user B's session
       await setTestSession(userB);
 
-      // Attempt to update should fail silently (RLS prevents the update)
+      // Attempt to update user A's entry
+      // Note: RLS prevents the update silently - no error is thrown,
+      // but the update affects 0 rows
       await updateTextAnalysis(
         entryA.id,
         MOCK_MOOD_DATA,
         AnalysisStatus.SUCCESS
       );
 
-      // Verify entry was NOT updated using admin query
+      // Verify entry was NOT updated by querying as admin (bypasses RLS)
+      // This is necessary because user B's query would return empty results
+      // due to RLS, even if the update had succeeded
       const adminEntries = await testHelpers.queryEntriesAsAdmin(userA.id);
       expect(adminEntries).toHaveLength(1);
       expect(adminEntries[0].moodMetadata).toBeNull();
