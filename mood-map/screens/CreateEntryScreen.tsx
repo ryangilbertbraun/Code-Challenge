@@ -64,16 +64,16 @@ const CreateEntryScreen: React.FC = () => {
       // Clear input
       setTextContent("");
 
-      // Show success alert and navigate back
-      alert.show({
-        title: "Success",
-        message: "Your journal entry has been created!",
-      });
+      // Navigate back first
+      router.back();
 
-      // Navigate back after a short delay to let the alert show
+      // Show success alert after navigation (non-blocking)
       setTimeout(() => {
-        router.back();
-      }, 1500);
+        alert.show({
+          title: "Success",
+          message: "Your journal entry has been created!",
+        });
+      }, 100);
     } catch (error) {
       console.error("Failed to create text entry:", error);
 
@@ -97,16 +97,16 @@ const CreateEntryScreen: React.FC = () => {
         // Pass the video URI directly - the service will handle the upload
         await createVideoEntry(videoUri, duration);
 
-        // Show success alert and navigate back
-        alert.show({
-          title: "Success",
-          message: "Your video entry has been created!",
-        });
+        // Navigate back first
+        router.back();
 
-        // Navigate back after a short delay to let the alert show
+        // Show success alert after navigation (non-blocking)
         setTimeout(() => {
-          router.back();
-        }, 1500);
+          alert.show({
+            title: "Success",
+            message: "Your video entry has been created!",
+          });
+        }, 100);
       } catch (error) {
         console.error("Failed to create video entry:", error);
 
