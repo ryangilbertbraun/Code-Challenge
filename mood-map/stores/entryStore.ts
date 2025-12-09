@@ -13,6 +13,7 @@ import { aiService } from "@/services/aiService";
 import { humeService } from "@/services/humeService";
 import { AppError } from "@/types/error.types";
 import { withRetry } from "@/utils/retry";
+import { config } from "@/constants/config";
 
 /**
  * Entry store state interface
@@ -233,7 +234,11 @@ export const useEntryStore = create<EntryStore>((set, get) => ({
       );
     }
 
-    return null;
+    // If Hume is disabled, return a message
+    return {
+      success: false,
+      message: "Video emotion analysis is temporarily unavailable.",
+    };
   },
 
   /**

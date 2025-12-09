@@ -24,6 +24,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
   const [alertOptions, setAlertOptions] = useState<AlertOptions | null>(null);
 
   const showAlert = useCallback((options: AlertOptions) => {
+    console.log("AlertContext: showAlert called with", options);
     setAlertOptions(options);
   }, []);
 
@@ -35,13 +36,19 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
     <AlertContext.Provider value={{ showAlert, hideAlert }}>
       {children}
       {alertOptions && (
-        <AlertDialog
-          visible={!!alertOptions}
-          title={alertOptions.title}
-          message={alertOptions.message}
-          buttons={alertOptions.buttons}
-          onDismiss={hideAlert}
-        />
+        <>
+          {console.log(
+            "AlertContext: Rendering AlertDialog with",
+            alertOptions
+          )}
+          <AlertDialog
+            visible={!!alertOptions}
+            title={alertOptions.title}
+            message={alertOptions.message}
+            buttons={alertOptions.buttons}
+            onDismiss={hideAlert}
+          />
+        </>
       )}
     </AlertContext.Provider>
   );

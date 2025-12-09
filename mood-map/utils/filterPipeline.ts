@@ -1,5 +1,5 @@
 // Filtering pipeline utility for journal entries
-// Implements deterministic filtering: emotion → search → date grouping → descending sort
+// Implements deterministic filtering: emotion → search → date grouping → sort
 
 import {
   JournalEntry,
@@ -8,11 +8,11 @@ import {
   EntryType,
   AnalysisStatus,
 } from "../types/entry.types";
-import { FilterState, EmotionRange } from "../types/filter.types";
+import { FilterState, EmotionRange, SortOption } from "../types/filter.types";
 
 /**
  * Main filtering pipeline function
- * Applies filters in deterministic order: emotion → search → date grouping → descending sort
+ * Applies filters in deterministic order: emotion → search → entry type → sort
  */
 export function applyFilterPipeline(
   entries: JournalEntry[],
@@ -27,8 +27,8 @@ export function applyFilterPipeline(
   // Step 3: Apply entry type filter
   filtered = applyEntryTypeFilter(filtered, filters.entryTypes);
 
-  // Step 4: Sort in descending chronological order (newest first)
-  filtered = sortDescending(filtered);
+  // Step 4: Apply sorting
+  filtered = applySorting(filtered, filters.sortBy);
 
   return filtered;
 }
@@ -167,6 +167,89 @@ export function sortDescending(entries: JournalEntry[]): JournalEntry[] {
     const dateB = new Date(b.createdAt).getTime();
     return dateB - dateA; // Descending order
   });
+}
+
+/**
+ * Apply sorting based on the selected sort option
+ */
+export function applySorting(
+  entries: JournalEntry[],
+  sortBy: SortOption
+): JournalEntry[] {
+  const sorted = [...entries];
+
+  switch (sortBy) {
+    case SortOption.NEWEST_FIRST:
+      return sorted.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      });
+
+    case SortOption.OLDEST_FIRST:
+      return sorted.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateA - dateB;
+      });
+
+    case SortOption.HAPPIEST_FIRST:
+      return sorted.sort((a, b) => {
+        const happinessA = getHappinessScore(a);
+        const happinessB = getHappinessScore(b);
+        return happinessB - happinessA;
+      });
+
+    case SortOption.SADDEST_FIRST:
+      return sorted.sort((a, b) => {
+        const sadnessA = getSadnessScore(a);
+        const sadnessB = getSadnessScore(b);
+        return sadnessB - sadnessA;
+      });
+
+    default:
+      return sorted;
+  }
+}
+
+/**
+ * Get happiness score from an entry
+ */
+function getHappinessScore(entry: JournalEntry): number {
+  if (entry.type === EntryType.TEXT) {
+    const textEntry = entry as TextEntry;
+    return textEntry.moodMetadata?.happiness ?? 0.5;
+  }
+
+  if (entry.type === EntryType.VIDEO) {
+    const videoEntry = entry as VideoEntry;
+    if (videoEntry.humeEmotionData) {
+      const scores = extractHumeEmotionScores(videoEntry.humeEmotionData);
+      return scores.happiness;
+    }
+  }
+
+  return 0.5; // Neutral default
+}
+
+/**
+ * Get sadness score from an entry
+ */
+function getSadnessScore(entry: JournalEntry): number {
+  if (entry.type === EntryType.TEXT) {
+    const textEntry = entry as TextEntry;
+    return textEntry.moodMetadata?.sadness ?? 0.5;
+  }
+
+  if (entry.type === EntryType.VIDEO) {
+    const videoEntry = entry as VideoEntry;
+    if (videoEntry.humeEmotionData) {
+      const scores = extractHumeEmotionScores(videoEntry.humeEmotionData);
+      return scores.sadness;
+    }
+  }
+
+  return 0.5; // Neutral default
 }
 
 /**

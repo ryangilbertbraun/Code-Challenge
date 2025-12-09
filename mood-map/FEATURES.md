@@ -68,7 +68,8 @@ See `AI_INSIGHTS_SETUP.md` for detailed setup instructions. Quick summary:
 
 - Text entries with AI mood analysis
 - Video entries with Hume emotion detection
-- Entry list with filtering and search
+- Entry list with filtering, search, and sorting
+- Sort options: Newest First, Oldest First, Happiest First, Saddest First
 
 ### Authentication
 

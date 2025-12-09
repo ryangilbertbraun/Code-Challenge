@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing } from "@/constants/theme";
 import { animations } from "@/constants/animations";
 import { useFilterStore } from "@/stores/filterStore";
+import { SortOption } from "@/types/filter.types";
 import EmotionSlider from "./EmotionSlider";
 import TypeFilter from "./TypeFilter";
 
@@ -20,7 +22,7 @@ import TypeFilter from "./TypeFilter";
  * Includes a clear filters button to reset all filters to defaults.
  */
 const FilterPanel: React.FC = () => {
-  const { filters, setEmotionRange, setEntryTypes, resetFilters } =
+  const { filters, setEmotionRange, setEntryTypes, setSortBy, resetFilters } =
     useFilterStore();
 
   const isFiltersActive =
@@ -53,6 +55,124 @@ const FilterPanel: React.FC = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.sortSection}>
+          <Text style={styles.sectionTitle}>Sort By</Text>
+          <View style={styles.sortOptions}>
+            <TouchableOpacity
+              style={[
+                styles.sortOptionButton,
+                filters.sortBy === SortOption.NEWEST_FIRST &&
+                  styles.sortOptionButtonActive,
+              ]}
+              onPress={() => setSortBy(SortOption.NEWEST_FIRST)}
+              activeOpacity={animations.feedback.pressOpacity}
+            >
+              <Ionicons
+                name="time-outline"
+                size={18}
+                color={
+                  filters.sortBy === SortOption.NEWEST_FIRST
+                    ? colors.background
+                    : colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.sortOptionButtonText,
+                  filters.sortBy === SortOption.NEWEST_FIRST &&
+                    styles.sortOptionButtonTextActive,
+                ]}
+              >
+                Newest
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.sortOptionButton,
+                filters.sortBy === SortOption.OLDEST_FIRST &&
+                  styles.sortOptionButtonActive,
+              ]}
+              onPress={() => setSortBy(SortOption.OLDEST_FIRST)}
+              activeOpacity={animations.feedback.pressOpacity}
+            >
+              <Ionicons
+                name="time-outline"
+                size={18}
+                color={
+                  filters.sortBy === SortOption.OLDEST_FIRST
+                    ? colors.background
+                    : colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.sortOptionButtonText,
+                  filters.sortBy === SortOption.OLDEST_FIRST &&
+                    styles.sortOptionButtonTextActive,
+                ]}
+              >
+                Oldest
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.sortOptionButton,
+                filters.sortBy === SortOption.HAPPIEST_FIRST &&
+                  styles.sortOptionButtonActive,
+              ]}
+              onPress={() => setSortBy(SortOption.HAPPIEST_FIRST)}
+              activeOpacity={animations.feedback.pressOpacity}
+            >
+              <Ionicons
+                name="happy-outline"
+                size={18}
+                color={
+                  filters.sortBy === SortOption.HAPPIEST_FIRST
+                    ? colors.background
+                    : colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.sortOptionButtonText,
+                  filters.sortBy === SortOption.HAPPIEST_FIRST &&
+                    styles.sortOptionButtonTextActive,
+                ]}
+              >
+                Happiest
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.sortOptionButton,
+                filters.sortBy === SortOption.SADDEST_FIRST &&
+                  styles.sortOptionButtonActive,
+              ]}
+              onPress={() => setSortBy(SortOption.SADDEST_FIRST)}
+              activeOpacity={animations.feedback.pressOpacity}
+            >
+              <Ionicons
+                name="sad-outline"
+                size={18}
+                color={
+                  filters.sortBy === SortOption.SADDEST_FIRST
+                    ? colors.background
+                    : colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.sortOptionButtonText,
+                  filters.sortBy === SortOption.SADDEST_FIRST &&
+                    styles.sortOptionButtonTextActive,
+                ]}
+              >
+                Saddest
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <TypeFilter
           selectedTypes={filters.entryTypes}
           onTypesChange={setEntryTypes}
@@ -127,6 +247,38 @@ const styles = StyleSheet.create({
     fontWeight: typography.fontWeight.semibold,
     color: colors.textPrimary,
     marginBottom: spacing[3],
+  },
+  sortSection: {
+    marginBottom: spacing[4],
+  },
+  sortOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing[2],
+  },
+  sortOptionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.neutral[300],
+    gap: spacing[2],
+  },
+  sortOptionButtonActive: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  sortOptionButtonText: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.textSecondary,
+  },
+  sortOptionButtonTextActive: {
+    color: colors.background,
+    fontWeight: typography.fontWeight.semibold,
   },
 });
 

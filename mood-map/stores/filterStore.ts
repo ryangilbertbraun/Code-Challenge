@@ -3,6 +3,7 @@ import {
   FilterState,
   EmotionRange,
   DEFAULT_FILTER_STATE,
+  SortOption,
 } from "@/types/filter.types";
 import { EntryType } from "@/types/entry.types";
 
@@ -20,6 +21,7 @@ interface FilterStore {
   ) => void;
   setEntryTypes: (types: EntryType[]) => void;
   setSearchText: (text: string) => void;
+  setSortBy: (sortBy: SortOption) => void;
   resetFilters: () => void;
 }
 
@@ -67,6 +69,19 @@ export const useFilterStore = create<FilterStore>((set) => ({
       filters: {
         ...state.filters,
         searchText: text,
+      },
+    }));
+  },
+
+  /**
+   * Set sort option
+   * @param sortBy - Sort option to apply
+   */
+  setSortBy: (sortBy) => {
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        sortBy,
       },
     }));
   },

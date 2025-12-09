@@ -10,6 +10,7 @@ import {
 } from "@/types/entry.types";
 import { AppError, ErrorCode } from "@/types/error.types";
 import { withRetry } from "@/utils/retry";
+import { config } from "@/constants/config";
 
 /**
  * Entry service interface
@@ -311,13 +312,17 @@ class EntryService implements IEntryService {
       // Use provided duration or default to 0
       const videoDuration = duration || 0;
 
-      // Submit Hume analysis job (non-blocking)
+      // Submit Hume analysis job (non-blocking) - only if enabled
       let humeJobId: string | null = null;
-      try {
-        const { humeService } = await import("./humeService");
-        humeJobId = await humeService.submitAnalysisJob(publicUrl);
-      } catch (error) {
-        console.error("Failed to submit Hume job:", error);
+      if (config.hume.enabled) {
+        try {
+          const { humeService } = await import("./humeService");
+          humeJobId = await humeService.submitAnalysisJob(publicUrl);
+        } catch (error) {
+          console.error("Failed to submit Hume job:", error);
+        }
+      } else {
+        console.log("Hume analysis is currently disabled");
       }
 
       // Create entry with retry logic

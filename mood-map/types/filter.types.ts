@@ -7,6 +7,13 @@ export interface EmotionRange {
   max: number; // 0-1
 }
 
+export enum SortOption {
+  NEWEST_FIRST = "newest_first",
+  OLDEST_FIRST = "oldest_first",
+  HAPPIEST_FIRST = "happiest_first",
+  SADDEST_FIRST = "saddest_first",
+}
+
 export interface FilterState {
   happiness: EmotionRange;
   fear: EmotionRange;
@@ -14,6 +21,7 @@ export interface FilterState {
   anger: EmotionRange;
   entryTypes: EntryType[]; // Filter by entry type
   searchText: string;
+  sortBy: SortOption;
 }
 
 export const DEFAULT_FILTER_STATE: FilterState = {
@@ -23,4 +31,5 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   anger: { min: 0.0, max: 1.0 },
   entryTypes: [EntryType.TEXT, EntryType.VIDEO],
   searchText: "",
+  sortBy: SortOption.NEWEST_FIRST,
 };

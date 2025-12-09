@@ -61,18 +61,19 @@ const CreateEntryScreen: React.FC = () => {
     try {
       await createTextEntry(trimmedContent);
 
-      // Clear input and navigate back
+      // Clear input
       setTextContent("");
+
+      // Show success alert and navigate back
       alert.show({
         title: "Success",
         message: "Your journal entry has been created!",
-        buttons: [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ],
       });
+
+      // Navigate back after a short delay to let the alert show
+      setTimeout(() => {
+        router.back();
+      }, 1500);
     } catch (error) {
       console.error("Failed to create text entry:", error);
 
@@ -96,17 +97,16 @@ const CreateEntryScreen: React.FC = () => {
         // Pass the video URI directly - the service will handle the upload
         await createVideoEntry(videoUri, duration);
 
-        // Navigate back
+        // Show success alert and navigate back
         alert.show({
           title: "Success",
           message: "Your video entry has been created!",
-          buttons: [
-            {
-              text: "OK",
-              onPress: () => router.back(),
-            },
-          ],
         });
+
+        // Navigate back after a short delay to let the alert show
+        setTimeout(() => {
+          router.back();
+        }, 1500);
       } catch (error) {
         console.error("Failed to create video entry:", error);
 
@@ -209,13 +209,7 @@ const CreateEntryScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={handleStartRecording}
-            disabled={isLoading}
-          >
-            <Ionicons name="videocam" size={28} color={colors.primary[700]} />
-          </TouchableOpacity>
+          <View style={styles.saveButton}>{/* Video mode - disabled */}</View>
         )}
       </View>
 
@@ -248,8 +242,16 @@ const CreateEntryScreen: React.FC = () => {
           style={[
             styles.modeButton,
             mode === "video" && styles.modeButtonActive,
+            styles.modeButtonDisabled,
           ]}
-          onPress={() => handleModeSwitch("video")}
+          onPress={() => {
+            // Disabled for now - coming soon
+            alert.show({
+              title: "Coming Soon",
+              message:
+                "Video journaling is currently under development. Stay tuned!",
+            });
+          }}
           disabled={isLoading}
         >
           <Ionicons
@@ -265,6 +267,9 @@ const CreateEntryScreen: React.FC = () => {
           >
             Video
           </Text>
+          <View style={styles.comingSoonPill}>
+            <Text style={styles.comingSoonPillText}>Soon</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -307,6 +312,21 @@ const CreateEntryScreen: React.FC = () => {
                 <Text style={styles.videoPlaceholderSubtext}>
                   Share your thoughts and emotions through video
                 </Text>
+              </View>
+
+              {/* Coming Soon Overlay */}
+              <View style={styles.comingSoonOverlay}>
+                <View style={styles.comingSoonBadge}>
+                  <Ionicons
+                    name="time-outline"
+                    size={32}
+                    color={colors.primary[600]}
+                  />
+                  <Text style={styles.comingSoonTitle}>Coming Soon</Text>
+                  <Text style={styles.comingSoonText}>
+                    Video journaling is currently under development
+                  </Text>
+                </View>
               </View>
             </View>
           )}
@@ -393,6 +413,21 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: typography.fontWeight.bold,
   },
+  modeButtonDisabled: {
+    opacity: 0.6,
+  },
+  comingSoonPill: {
+    backgroundColor: colors.primary[500],
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: 8,
+    marginLeft: spacing[1],
+  },
+  comingSoonPillText: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.background,
+  },
   content: {
     flex: 1,
   },
@@ -436,6 +471,42 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing[2],
     textAlign: "center",
+  },
+  comingSoonOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  comingSoonBadge: {
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    padding: spacing[8],
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: colors.primary[200],
+  },
+  comingSoonTitle: {
+    fontSize: typography.fontSize["2xl"],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.primary[600],
+    marginTop: spacing[3],
+    marginBottom: spacing[2],
+  },
+  comingSoonText: {
+    fontSize: typography.fontSize.base,
+    color: colors.textSecondary,
+    textAlign: "center",
+    maxWidth: 250,
   },
 });
 

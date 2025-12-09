@@ -17,6 +17,7 @@ import { colors, typography, spacing } from "@/constants/theme";
 import { useEntryStore } from "@/stores/entryStore";
 import { useFilterStore } from "@/stores/filterStore";
 import { applyFilterPipeline } from "@/utils/filterPipeline";
+import { SortOption } from "@/types/filter.types";
 import {
   groupByDate,
   getDateGroupLabel,
@@ -53,11 +54,12 @@ interface SectionData {
 const JournalListScreen: React.FC = () => {
   const router = useRouter();
   const { entries, isLoading, error, fetchEntries } = useEntryStore();
-  const { filters, setSearchText } = useFilterStore();
+  const { filters, setSearchText, setSortBy } = useFilterStore();
   const { handleError } = useAuthErrorHandler();
   const [refreshing, setRefreshing] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
 
   // Fetch entries on mount
   useEffect(() => {
@@ -175,6 +177,41 @@ const JournalListScreen: React.FC = () => {
   const handleFilterClose = useCallback(() => {
     setShowFilterModal(false);
   }, []);
+
+  // Handle sort button press
+  const handleSortPress = useCallback(() => {
+    setShowSortModal(true);
+  }, []);
+
+  // Handle sort modal close
+  const handleSortClose = useCallback(() => {
+    setShowSortModal(false);
+  }, []);
+
+  // Handle sort option selection
+  const handleSortSelect = useCallback(
+    (sortOption: SortOption) => {
+      setSortBy(sortOption);
+      setShowSortModal(false);
+    },
+    [setSortBy]
+  );
+
+  // Get sort label
+  const getSortLabel = (sortBy: SortOption): string => {
+    switch (sortBy) {
+      case SortOption.NEWEST_FIRST:
+        return "Sorted by: Newest First";
+      case SortOption.OLDEST_FIRST:
+        return "Sorted by: Oldest First";
+      case SortOption.HAPPIEST_FIRST:
+        return "Sorted by: Happiest First";
+      case SortOption.SADDEST_FIRST:
+        return "Sorted by: Saddest First";
+      default:
+        return "Sorted by: Newest First";
+    }
+  };
 
   // Check if filters are active
   const hasActiveFilters = useMemo(() => {
@@ -379,19 +416,31 @@ const JournalListScreen: React.FC = () => {
             </TouchableOpacity>
             <Text style={styles.headerTitle}>All Entries</Text>
           </View>
-          <TouchableOpacity
-            onPress={handleFilterPress}
-            style={styles.filterButton}
-          >
-            <Ionicons
-              name="filter"
-              size={24}
-              color={
-                hasActiveFilters ? colors.primary[500] : colors.textPrimary
-              }
-            />
-            {hasActiveFilters && <View style={styles.filterBadge} />}
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={handleSortPress}
+              style={styles.sortButton}
+            >
+              <Ionicons
+                name="swap-vertical"
+                size={24}
+                color={colors.textPrimary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleFilterPress}
+              style={styles.filterButton}
+            >
+              <Ionicons
+                name="filter"
+                size={24}
+                color={
+                  hasActiveFilters ? colors.primary[500] : colors.textPrimary
+                }
+              />
+              {hasActiveFilters && <View style={styles.filterBadge} />}
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.searchBarContainer}>
@@ -399,6 +448,12 @@ const JournalListScreen: React.FC = () => {
             value={filters.searchText}
             onSearchChange={setSearchText}
           />
+        </View>
+
+        <View style={styles.sortIndicatorContainer}>
+          <Text style={styles.sortIndicatorText}>
+            {getSortLabel(filters.sortBy)}
+          </Text>
         </View>
 
         <SectionList
@@ -444,6 +499,159 @@ const JournalListScreen: React.FC = () => {
             </View>
             <FilterPanel />
           </SafeAreaView>
+        </Modal>
+
+        <Modal
+          visible={showSortModal}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={handleSortClose}
+        >
+          <TouchableOpacity
+            style={styles.sortModalOverlay}
+            activeOpacity={1}
+            onPress={handleSortClose}
+          >
+            <View style={styles.sortModalContent}>
+              <Text style={styles.sortModalTitle}>Sort By</Text>
+              <TouchableOpacity
+                style={[
+                  styles.sortOption,
+                  filters.sortBy === SortOption.NEWEST_FIRST &&
+                    styles.sortOptionActive,
+                ]}
+                onPress={() => handleSortSelect(SortOption.NEWEST_FIRST)}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={20}
+                  color={
+                    filters.sortBy === SortOption.NEWEST_FIRST
+                      ? colors.primary[600]
+                      : colors.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    filters.sortBy === SortOption.NEWEST_FIRST &&
+                      styles.sortOptionTextActive,
+                  ]}
+                >
+                  Newest First
+                </Text>
+                {filters.sortBy === SortOption.NEWEST_FIRST && (
+                  <Ionicons
+                    name="checkmark"
+                    size={20}
+                    color={colors.primary[600]}
+                  />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sortOption,
+                  filters.sortBy === SortOption.OLDEST_FIRST &&
+                    styles.sortOptionActive,
+                ]}
+                onPress={() => handleSortSelect(SortOption.OLDEST_FIRST)}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={20}
+                  color={
+                    filters.sortBy === SortOption.OLDEST_FIRST
+                      ? colors.primary[600]
+                      : colors.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    filters.sortBy === SortOption.OLDEST_FIRST &&
+                      styles.sortOptionTextActive,
+                  ]}
+                >
+                  Oldest First
+                </Text>
+                {filters.sortBy === SortOption.OLDEST_FIRST && (
+                  <Ionicons
+                    name="checkmark"
+                    size={20}
+                    color={colors.primary[600]}
+                  />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sortOption,
+                  filters.sortBy === SortOption.HAPPIEST_FIRST &&
+                    styles.sortOptionActive,
+                ]}
+                onPress={() => handleSortSelect(SortOption.HAPPIEST_FIRST)}
+              >
+                <Ionicons
+                  name="happy-outline"
+                  size={20}
+                  color={
+                    filters.sortBy === SortOption.HAPPIEST_FIRST
+                      ? colors.primary[600]
+                      : colors.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    filters.sortBy === SortOption.HAPPIEST_FIRST &&
+                      styles.sortOptionTextActive,
+                  ]}
+                >
+                  Happiest First
+                </Text>
+                {filters.sortBy === SortOption.HAPPIEST_FIRST && (
+                  <Ionicons
+                    name="checkmark"
+                    size={20}
+                    color={colors.primary[600]}
+                  />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sortOption,
+                  filters.sortBy === SortOption.SADDEST_FIRST &&
+                    styles.sortOptionActive,
+                ]}
+                onPress={() => handleSortSelect(SortOption.SADDEST_FIRST)}
+              >
+                <Ionicons
+                  name="sad-outline"
+                  size={20}
+                  color={
+                    filters.sortBy === SortOption.SADDEST_FIRST
+                      ? colors.primary[600]
+                      : colors.textSecondary
+                  }
+                />
+                <Text
+                  style={[
+                    styles.sortOptionText,
+                    filters.sortBy === SortOption.SADDEST_FIRST &&
+                      styles.sortOptionTextActive,
+                  ]}
+                >
+                  Saddest First
+                </Text>
+                {filters.sortBy === SortOption.SADDEST_FIRST && (
+                  <Ionicons
+                    name="checkmark"
+                    size={20}
+                    color={colors.primary[600]}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </Modal>
       </SafeAreaView>
     );
@@ -704,6 +912,75 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semibold,
     color: colors.primary[600],
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  sortButton: {
+    padding: spacing[2],
+  },
+  sortModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sortModalContent: {
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    padding: spacing[4],
+    width: "80%",
+    maxWidth: 320,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  sortModalTitle: {
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing[4],
+    textAlign: "center",
+  },
+  sortOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderRadius: 8,
+    gap: spacing[3],
+    marginBottom: spacing[2],
+  },
+  sortOptionActive: {
+    backgroundColor: colors.primary[50],
+  },
+  sortOptionText: {
+    flex: 1,
+    fontSize: typography.fontSize.base,
+    color: colors.textPrimary,
+  },
+  sortOptionTextActive: {
+    color: colors.primary[600],
+    fontWeight: typography.fontWeight.semibold,
+  },
+  sortIndicatorContainer: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.neutral[200],
+  },
+  sortIndicatorText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.textSecondary,
+    fontStyle: "italic",
   },
 });
 

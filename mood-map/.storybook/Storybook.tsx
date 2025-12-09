@@ -9,30 +9,46 @@ import {
 import { colors, spacing, typography } from "../constants/theme";
 
 // Import all stories
-import * as MoodBadgeStories from "../components/journal/MoodBadge.stories";
-import * as EmotionVisualizationStories from "../components/journal/EmotionVisualization.stories";
-import * as EntryCardStories from "../components/journal/EntryCard.stories";
-import * as TextEntryDetailStories from "../components/journal/TextEntryDetail.stories";
-import * as VideoEntryDetailStories from "../components/journal/VideoEntryDetail.stories";
+// Filter components
 import * as EmotionSliderStories from "../components/filters/EmotionSlider.stories";
+import * as FilterPanelStories from "../components/filters/FilterPanel.stories";
 import * as SearchBarStories from "../components/filters/SearchBar.stories";
 import * as TypeFilterStories from "../components/filters/TypeFilter.stories";
-import * as FilterPanelStories from "../components/filters/FilterPanel.stories";
-import * as VideoRecorderStories from "../components/video/VideoRecorder.stories";
+
+// Journal components
+import * as ActivityCalendarStories from "../components/journal/ActivityCalendar.stories";
+import * as EmotionVisualizationStories from "../components/journal/EmotionVisualization.stories";
+import * as EntryCardStories from "../components/journal/EntryCard.stories";
+import * as JournalStatsStories from "../components/journal/JournalStats.stories";
+import * as MoodBadgeStories from "../components/journal/MoodBadge.stories";
+import * as QuickActionsStories from "../components/journal/QuickActions.stories";
+import * as TextEntryDetailStories from "../components/journal/TextEntryDetail.stories";
+import * as VideoEntryDetailStories from "../components/journal/VideoEntryDetail.stories";
+import * as WelcomeHeaderStories from "../components/journal/WelcomeHeader.stories";
+
+// Video components
 import * as VideoPlayerStories from "../components/video/VideoPlayer.stories";
+import * as VideoRecorderStories from "../components/video/VideoRecorder.stories";
 
 const allStories = {
-  MoodBadge: MoodBadgeStories,
-  EmotionVisualization: EmotionVisualizationStories,
-  EntryCard: EntryCardStories,
-  TextEntryDetail: TextEntryDetailStories,
-  VideoEntryDetail: VideoEntryDetailStories,
+  // Filter components
   EmotionSlider: EmotionSliderStories,
+  FilterPanel: FilterPanelStories,
   SearchBar: SearchBarStories,
   TypeFilter: TypeFilterStories,
-  FilterPanel: FilterPanelStories,
-  VideoRecorder: VideoRecorderStories,
+  // Journal components
+  ActivityCalendar: ActivityCalendarStories,
+  EmotionVisualization: EmotionVisualizationStories,
+  EntryCard: EntryCardStories,
+  JournalStats: JournalStatsStories,
+  MoodBadge: MoodBadgeStories,
+  QuickActions: QuickActionsStories,
+  TextEntryDetail: TextEntryDetailStories,
+  VideoEntryDetail: VideoEntryDetailStories,
+  WelcomeHeader: WelcomeHeaderStories,
+  // Video components
   VideoPlayer: VideoPlayerStories,
+  VideoRecorder: VideoRecorderStories,
 };
 
 /**

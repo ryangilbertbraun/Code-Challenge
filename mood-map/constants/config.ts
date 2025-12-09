@@ -18,5 +18,6 @@ export const config = {
   },
   hume: {
     apiKey: process.env.EXPO_PUBLIC_HUME_API_KEY || "",
+    enabled: false, // Temporarily disabled until Hume processes queued videos
   },
 };
