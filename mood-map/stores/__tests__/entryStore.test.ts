@@ -18,7 +18,16 @@ import {
 } from "@/types/entry.types";
 
 // Mock dependencies
-jest.mock("@/services/entryService");
+jest.mock("@/services/entryService", () => ({
+  entryService: {
+    getEntries: jest.fn(),
+    createTextEntry: jest.fn(),
+    createVideoEntry: jest.fn(),
+    updateTextAnalysis: jest.fn().mockResolvedValue(undefined),
+    updateVideoAnalysis: jest.fn().mockResolvedValue(undefined),
+    deleteEntry: jest.fn(),
+  },
+}));
 jest.mock("@/services/aiService");
 jest.mock("@/services/humeService");
 jest.mock("@/utils/retry", () => ({

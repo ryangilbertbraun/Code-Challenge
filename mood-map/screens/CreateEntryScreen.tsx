@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -16,6 +15,8 @@ import { colors, typography, spacing } from "@/constants/theme";
 import { useEntryStore } from "@/stores/entryStore";
 import VideoRecorder from "@/components/video/VideoRecorder";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuthErrorHandler } from "@/hooks/useAuthErrorHandler";
+import { useAlert } from "@/contexts/AlertContext";
 
 type InputMode = "text" | "video";
 
@@ -37,6 +38,8 @@ type InputMode = "text" | "video";
 const CreateEntryScreen: React.FC = () => {
   const router = useRouter();
   const { createTextEntry, createVideoEntry, isLoading } = useEntryStore();
+  const { handleError } = useAuthErrorHandler();
+  const alert = useAlert();
 
   const [mode, setMode] = useState<InputMode>("text");
   const [textContent, setTextContent] = useState("");
@@ -48,10 +51,10 @@ const CreateEntryScreen: React.FC = () => {
 
     // Validate non-empty content
     if (!trimmedContent) {
-      Alert.alert(
-        "Empty Entry",
-        "Please write something before creating your entry."
-      );
+      alert.show({
+        title: "Empty Entry",
+        message: "Please write something before creating your entry.",
+      });
       return;
     }
 
@@ -60,17 +63,29 @@ const CreateEntryScreen: React.FC = () => {
 
       // Clear input and navigate back
       setTextContent("");
-      Alert.alert("Success", "Your journal entry has been created!", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
+      alert.show({
+        title: "Success",
+        message: "Your journal entry has been created!",
+        buttons: [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ],
+      });
     } catch (error) {
       console.error("Failed to create text entry:", error);
-      Alert.alert("Error", "Failed to create your entry. Please try again.");
+
+      // Check if it's an auth error
+      const handled = await handleError(error);
+      if (!handled) {
+        alert.show({
+          title: "Error",
+          message: "Failed to create your entry. Please try again.",
+        });
+      }
     }
-  }, [textContent, createTextEntry, router]);
+  }, [textContent, createTextEntry, router, handleError, alert]);
 
   // Handle video recording complete
   const handleVideoRecordingComplete = useCallback(
@@ -82,21 +97,30 @@ const CreateEntryScreen: React.FC = () => {
         await createVideoEntry(videoUri, duration);
 
         // Navigate back
-        Alert.alert("Success", "Your video entry has been created!", [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]);
+        alert.show({
+          title: "Success",
+          message: "Your video entry has been created!",
+          buttons: [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ],
+        });
       } catch (error) {
         console.error("Failed to create video entry:", error);
-        Alert.alert(
-          "Error",
-          "Failed to create your video entry. Please try again."
-        );
+
+        // Check if it's an auth error
+        const handled = await handleError(error);
+        if (!handled) {
+          alert.show({
+            title: "Error",
+            message: "Failed to create your video entry. Please try again.",
+          });
+        }
       }
     },
-    [createVideoEntry, router]
+    [createVideoEntry, router, handleError, alert]
   );
 
   // Handle video recording cancel
@@ -118,22 +142,22 @@ const CreateEntryScreen: React.FC = () => {
   // Handle cancel/back
   const handleCancel = useCallback(() => {
     if (textContent.trim() && mode === "text") {
-      Alert.alert(
-        "Discard Entry?",
-        "You have unsaved changes. Are you sure you want to go back?",
-        [
+      alert.show({
+        title: "Discard Entry?",
+        message: "You have unsaved changes. Are you sure you want to go back?",
+        buttons: [
           { text: "Keep Editing", style: "cancel" },
           {
             text: "Discard",
             style: "destructive",
             onPress: () => router.back(),
           },
-        ]
-      );
+        ],
+      });
     } else {
       router.back();
     }
-  }, [textContent, mode, router]);
+  }, [textContent, mode, router, alert]);
 
   // Show video recorder when recording
   if (isRecording) {

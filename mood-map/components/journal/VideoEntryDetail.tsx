@@ -149,7 +149,7 @@ const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
           style={styles.video}
           contentFit="contain"
           nativeControls={true}
-          allowsFullscreen={true}
+          fullscreenOptions={{ enabled: true }}
           allowsPictureInPicture={true}
         />
       </View>

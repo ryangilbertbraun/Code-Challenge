@@ -5,13 +5,15 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGuard } from "@/navigation/AuthGuard";
 import CustomSplashScreen from "@/components/SplashScreen";
+import { AlertProvider } from "@/contexts/AlertContext";
 
 /**
  * Root layout component with navigation and route protection
@@ -25,13 +27,47 @@ import CustomSplashScreen from "@/components/SplashScreen";
  */
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { initializeSession } = useAuthStore();
+  const { initializeSession, refreshSession, session } = useAuthStore();
   const [showSplash, setShowSplash] = useState(true);
+  const appState = useRef(AppState.currentState);
 
   // Initialize session on app start
   useEffect(() => {
     initializeSession();
   }, [initializeSession]);
+
+  // Refresh session when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextAppState: AppStateStatus) => {
+        // App has come to the foreground from background
+        if (
+          appState.current.match(/inactive|background/) &&
+          nextAppState === "active"
+        ) {
+          console.log("App came to foreground, checking session...");
+
+          // Only refresh if we have a session
+          if (session) {
+            try {
+              await refreshSession();
+              console.log("Session refreshed successfully");
+            } catch (error) {
+              console.log("Session refresh failed:", error);
+              // The auth state listener will handle logout if needed
+            }
+          }
+        }
+
+        appState.current = nextAppState;
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshSession, session]);
 
   const handleSplashFinish = () => {
     setShowSplash(false);
@@ -39,24 +75,29 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AuthGuard>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="auth" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="modal"
-            options={{ presentation: "modal", title: "Modal" }}
-          />
-          <Stack.Screen
-            name="create-entry"
-            options={{ presentation: "modal", headerShown: false }}
-          />
-          <Stack.Screen name="entry-detail" options={{ headerShown: false }} />
-        </Stack>
-      </AuthGuard>
-      <StatusBar style="auto" />
-      {showSplash && <CustomSplashScreen onFinish={handleSplashFinish} />}
+      <AlertProvider>
+        <AuthGuard>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="modal"
+              options={{ presentation: "modal", title: "Modal" }}
+            />
+            <Stack.Screen
+              name="create-entry"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="entry-detail"
+              options={{ headerShown: false }}
+            />
+          </Stack>
+        </AuthGuard>
+        <StatusBar style="auto" />
+        {showSplash && <CustomSplashScreen onFinish={handleSplashFinish} />}
+      </AlertProvider>
     </ThemeProvider>
   );
 }

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors, typography, spacing } from "@/constants/theme";
 import { useAuthStore } from "@/stores/authStore";
 import { useEntryStore } from "@/stores/entryStore";
+import { useAlert } from "@/contexts/AlertContext";
 
 /**
  * Profile Screen
@@ -24,6 +24,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { session, logout } = useAuthStore();
   const { entries } = useEntryStore();
+  const alert = useAlert();
 
   const videoSource = require("@/assets/videos/writing_book.mp4");
   const player = useVideoPlayer(videoSource, (player) => {
@@ -89,10 +90,10 @@ export default function ProfileScreen() {
   }, [entries]);
 
   const handleLogout = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
+    alert.show({
+      title: "Log Out",
+      message: "Are you sure you want to log out?",
+      buttons: [
         {
           text: "Cancel",
           style: "cancel",
@@ -105,13 +106,15 @@ export default function ProfileScreen() {
               await logout();
               router.replace("/auth");
             } catch (error) {
-              Alert.alert("Error", "Failed to log out. Please try again.");
+              alert.show({
+                title: "Error",
+                message: "Failed to log out. Please try again.",
+              });
             }
           },
         },
       ],
-      { cancelable: true }
-    );
+    });
   };
 
   return (

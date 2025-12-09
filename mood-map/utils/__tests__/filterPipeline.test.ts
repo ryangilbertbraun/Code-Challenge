@@ -177,7 +177,7 @@ describe("filterPipeline", () => {
       expect(filtered[0].id).toBe("1");
     });
 
-    it("should exclude entries without analysis", () => {
+    it("should include all entries when using default filters", () => {
       const entryWithoutAnalysis: TextEntry = {
         id: "1",
         userId: "user1",
@@ -196,6 +196,36 @@ describe("filterPipeline", () => {
 
       const filtered = applyEmotionFilters(entries, DEFAULT_FILTER_STATE);
 
+      // Default filters (0-1 range) should include all entries
+      expect(filtered).toHaveLength(2);
+    });
+
+    it("should exclude entries without analysis when filters are active", () => {
+      const entryWithoutAnalysis: TextEntry = {
+        id: "1",
+        userId: "user1",
+        type: EntryType.TEXT,
+        content: "test",
+        moodMetadata: null,
+        analysisStatus: AnalysisStatus.PENDING,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const entries: JournalEntry[] = [
+        entryWithoutAnalysis,
+        createTextEntry("2", "analyzed", 0.8, 0.2, 0.1, 0.1, new Date()),
+      ];
+
+      // Use non-default filters
+      const filters: FilterState = {
+        ...DEFAULT_FILTER_STATE,
+        happiness: { min: 0.5, max: 1.0 },
+      };
+
+      const filtered = applyEmotionFilters(entries, filters);
+
+      // Should exclude entry without analysis when filters are active
       expect(filtered).toHaveLength(1);
       expect(filtered[0].id).toBe("2");
     });

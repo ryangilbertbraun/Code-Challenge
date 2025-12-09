@@ -204,7 +204,6 @@ export default function AuthScreen() {
       router.replace("/(tabs)");
     } catch (error) {
       // Error is already set in the store and will be displayed in the form
-      console.error("Login error:", error);
     }
   };
 
@@ -225,7 +224,6 @@ export default function AuthScreen() {
       router.replace("/(tabs)");
     } catch (error) {
       // Error is already set in the store and will be displayed in the form
-      console.error("Signup error:", error);
     }
   };
 

@@ -17,6 +17,9 @@ export interface IAuthService {
   logout(): Promise<void>;
   getCurrentSession(): Promise<AuthSession | null>;
   refreshSession(): Promise<AuthSession>;
+  onAuthStateChange(
+    callback: (session: AuthSession | null) => void
+  ): () => void;
 }
 
 /**
@@ -351,6 +354,39 @@ class AuthService implements IAuthService {
         retryable: true,
       } as AppError;
     }
+  }
+
+  /**
+   * Listen to auth state changes (sign in, sign out, token refresh, etc.)
+   * Returns an unsubscribe function
+   */
+  onAuthStateChange(
+    callback: (session: AuthSession | null) => void
+  ): () => void {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
+      console.log("Supabase auth event:", event);
+
+      if (supabaseSession && supabaseSession.user) {
+        // Convert Supabase session to our AuthSession format
+        const authSession = toAuthSession(
+          supabaseSession.user,
+          supabaseSession.access_token,
+          supabaseSession.refresh_token,
+          supabaseSession.expires_at || Date.now() / 1000 + 3600
+        );
+        callback(authSession);
+      } else {
+        // Session expired or user signed out
+        callback(null);
+      }
+    });
+
+    // Return unsubscribe function
+    return () => {
+      subscription.unsubscribe();
+    };
   }
 }
 

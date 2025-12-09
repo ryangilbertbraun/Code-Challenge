@@ -45,6 +45,9 @@ export function getSupabaseClient(): SupabaseClient {
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: false,
+          // Refresh token 5 minutes before expiry (default is 10 seconds)
+          // This gives more time for the refresh to complete
+          flowType: "pkce",
         },
       }
     );

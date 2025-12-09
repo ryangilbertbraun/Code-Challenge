@@ -29,6 +29,7 @@ import JournalStats from "@/components/journal/JournalStats";
 import FilterPanel from "@/components/filters/FilterPanel";
 import SearchBar from "@/components/filters/SearchBar";
 import { JournalEntry } from "@/types/entry.types";
+import { useAuthErrorHandler } from "@/hooks/useAuthErrorHandler";
 
 interface SectionData {
   title: string;
@@ -53,6 +54,7 @@ const JournalListScreen: React.FC = () => {
   const router = useRouter();
   const { entries, isLoading, error, fetchEntries } = useEntryStore();
   const { filters, setSearchText } = useFilterStore();
+  const { handleError } = useAuthErrorHandler();
   const [refreshing, setRefreshing] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -61,13 +63,14 @@ const JournalListScreen: React.FC = () => {
   useEffect(() => {
     // Add a small delay to ensure auth session is initialized
     const timer = setTimeout(() => {
-      fetchEntries().catch((err) => {
+      fetchEntries().catch(async (err) => {
         console.error("Failed to fetch entries:", err);
+        await handleError(err);
       });
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [fetchEntries]);
+  }, [fetchEntries, handleError]);
 
   // Apply filtering pipeline and date grouping
   // Memoized to avoid recalculation on every render
@@ -93,10 +96,12 @@ const JournalListScreen: React.FC = () => {
     setRefreshing(true);
     try {
       await fetchEntries();
+    } catch (err) {
+      await handleError(err);
     } finally {
       setRefreshing(false);
     }
-  }, [fetchEntries]);
+  }, [fetchEntries, handleError]);
 
   // Entry press handler - navigate to entry detail screen
   const handleEntryPress = useCallback(
@@ -241,51 +246,101 @@ const JournalListScreen: React.FC = () => {
     );
   }
 
-  // Empty state (no entries match filters)
+  // Empty state (no entries match filters or no entries at all)
   if (sections.length === 0) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Journal</Text>
-          <TouchableOpacity
-            onPress={handleFilterPress}
-            style={styles.filterButton}
-          >
-            <Ionicons
-              name="filter"
-              size={24}
-              color={
-                hasActiveFilters ? colors.primary[500] : colors.textPrimary
-              }
+    // If filters are active, show filtered empty state with header/search
+    if (hasActiveFilters) {
+      return (
+        <SafeAreaView style={styles.container} edges={["top"]}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>My Journal</Text>
+            <TouchableOpacity
+              onPress={handleFilterPress}
+              style={styles.filterButton}
+            >
+              <Ionicons name="filter" size={24} color={colors.primary[500]} />
+              <View style={styles.filterBadge} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.searchBarContainer}>
+            <SearchBar
+              value={filters.searchText}
+              onSearchChange={setSearchText}
             />
-            {hasActiveFilters && <View style={styles.filterBadge} />}
+          </View>
+
+          <View style={styles.centerContainer}>
+            <Text style={styles.emptyTitle}>No matching entries</Text>
+            <Text style={styles.emptyMessage}>
+              Try adjusting your filters to see more entries
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={handleCreateEntry}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={32} color={colors.textPrimary} />
           </TouchableOpacity>
-        </View>
 
-        <View style={styles.searchBarContainer}>
-          <SearchBar
-            value={filters.searchText}
-            onSearchChange={setSearchText}
-          />
-        </View>
+          <Modal
+            visible={showFilterModal}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={handleFilterClose}
+          >
+            <SafeAreaView style={styles.modalContainer} edges={["top"]}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={handleFilterClose}>
+                  <Text style={styles.modalCloseText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <FilterPanel />
+            </SafeAreaView>
+          </Modal>
+        </SafeAreaView>
+      );
+    }
 
-        <View style={styles.centerContainer}>
-          <Text style={styles.emptyTitle}>
-            {hasActiveFilters ? "No matching entries" : "No entries yet"}
-          </Text>
-          <Text style={styles.emptyMessage}>
-            {hasActiveFilters
-              ? "Try adjusting your filters to see more entries"
-              : "Start journaling to see your entries here"}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={handleCreateEntry}
-          activeOpacity={0.8}
+    // No entries at all - show dashboard-style empty state
+    return (
+      <SafeAreaView style={styles.container} edges={[]}>
+        <ScrollView
+          contentContainerStyle={styles.dashboardContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
+            />
+          }
         >
-          <Ionicons name="add" size={32} color={colors.textPrimary} />
-        </TouchableOpacity>
+          <HeroSection
+            totalEntries={0}
+            onCreateEntry={handleCreateEntry}
+            onViewAll={handleViewAll}
+          />
+
+          <View style={styles.contentSection}>
+            <View style={styles.emptyStateCard}>
+              <Ionicons
+                name="book-outline"
+                size={64}
+                color={colors.neutral[400]}
+                style={styles.emptyStateIcon}
+              />
+              <Text style={styles.emptyStateTitle}>
+                Your journal is waiting
+              </Text>
+              <Text style={styles.emptyStateDescription}>
+                Start capturing your thoughts, feelings, and experiences. Your
+                first entry is just a tap away.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
 
         <Modal
           visible={showFilterModal}
@@ -583,6 +638,36 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.base,
     color: colors.textSecondary,
     textAlign: "center",
+  },
+  emptyStateCard: {
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    padding: spacing[6],
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  emptyStateIcon: {
+    marginBottom: spacing[4],
+  },
+  emptyStateTitle: {
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing[2],
+    textAlign: "center",
+  },
+  emptyStateDescription: {
+    fontSize: typography.fontSize.base,
+    color: colors.textSecondary,
+    textAlign: "center",
+    lineHeight: typography.fontSize.base * 1.5,
   },
   fab: {
     position: "absolute",

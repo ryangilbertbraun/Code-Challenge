@@ -205,65 +205,62 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
         style={styles.camera}
         facing={facing}
         mode="video"
-      >
-        {/* Top controls */}
-        <View style={styles.topControls}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={handleCancel}
-            disabled={isRecording}
-          >
-            <Ionicons
-              name="close"
-              size={32}
-              color={isRecording ? colors.neutral[500] : colors.background}
-            />
-          </TouchableOpacity>
+      />
 
-          {isRecording && (
-            <View style={styles.recordingIndicator}>
-              <View style={styles.recordingDot} />
-              <Text style={styles.recordingText}>
-                {formatDuration(recordingDuration)} /{" "}
-                {formatDuration(maxDuration)}
-              </Text>
-            </View>
-          )}
+      {/* Top controls */}
+      <View style={styles.topControls}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={handleCancel}
+          disabled={isRecording}
+        >
+          <Ionicons
+            name="close"
+            size={32}
+            color={isRecording ? colors.neutral[500] : colors.background}
+          />
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={toggleCameraFacing}
-            disabled={isRecording}
-          >
-            <Ionicons
-              name="camera-reverse"
-              size={32}
-              color={isRecording ? colors.neutral[500] : colors.background}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Bottom controls */}
-        <View style={styles.bottomControls}>
-          <View style={styles.recordButtonContainer}>
-            {!isRecording ? (
-              <TouchableOpacity
-                style={styles.recordButton}
-                onPress={startRecording}
-              >
-                <View style={styles.recordButtonInner} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.stopButton}
-                onPress={stopRecording}
-              >
-                <View style={styles.stopButtonInner} />
-              </TouchableOpacity>
-            )}
+        {isRecording && (
+          <View style={styles.recordingIndicator}>
+            <View style={styles.recordingDot} />
+            <Text style={styles.recordingText}>
+              {formatDuration(recordingDuration)} /{" "}
+              {formatDuration(maxDuration)}
+            </Text>
           </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={toggleCameraFacing}
+          disabled={isRecording}
+        >
+          <Ionicons
+            name="camera-reverse"
+            size={32}
+            color={isRecording ? colors.neutral[500] : colors.background}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Bottom controls */}
+      <View style={styles.bottomControls}>
+        <View style={styles.recordButtonContainer}>
+          {!isRecording ? (
+            <TouchableOpacity
+              style={styles.recordButton}
+              onPress={startRecording}
+            >
+              <View style={styles.recordButtonInner} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.stopButton} onPress={stopRecording}>
+              <View style={styles.stopButtonInner} />
+            </TouchableOpacity>
+          )}
         </View>
-      </CameraView>
+      </View>
     </View>
   );
 };
@@ -310,11 +307,16 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   topControls: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingTop: spacing[12],
     paddingHorizontal: spacing[4],
+    zIndex: 1,
   },
   iconButton: {
     width: 48,
