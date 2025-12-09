@@ -13,13 +13,27 @@
 import { view } from "@storybook/react-native";
 
 // Import all stories
-import "./components/journal/MoodBadge.stories";
+
+// Filter components
+import "./components/filters/EmotionSlider.stories";
+import "./components/filters/FilterPanel.stories";
+import "./components/filters/SearchBar.stories";
+import "./components/filters/TypeFilter.stories";
+
+// Journal components
+import "./components/journal/ActivityCalendar.stories";
 import "./components/journal/EmotionVisualization.stories";
 import "./components/journal/EntryCard.stories";
+import "./components/journal/JournalStats.stories";
+import "./components/journal/MoodBadge.stories";
+import "./components/journal/QuickActions.stories";
 import "./components/journal/TextEntryDetail.stories";
 import "./components/journal/VideoEntryDetail.stories";
-import "./components/video/VideoRecorder.stories";
+import "./components/journal/WelcomeHeader.stories";
+
+// Video components
 import "./components/video/VideoPlayer.stories";
+import "./components/video/VideoRecorder.stories";
 
 const StorybookUI = view;
 

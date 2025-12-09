@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
 import React from "react";
-import { View, Alert } from "react-native";
+import { View } from "react-native";
 import QuickActions from "./QuickActions";
 
 const meta = {
@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     onCreateEntry: () =>
-      Alert.alert("Create Entry", "Navigate to create entry screen"),
-    onViewAll: () => Alert.alert("View All", "Navigate to all entries view"),
+      console.log("Create Entry", "Navigate to create entry screen"),
+    onViewAll: () => console.log("View All", "Navigate to all entries view"),
   },
 };

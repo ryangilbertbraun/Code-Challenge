@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
 import React from "react";
-import { View, Alert } from "react-native";
+import { View } from "react-native";
 import EntryCard from "./EntryCard";
 import {
   TextEntry,
@@ -128,7 +128,7 @@ const videoEntryLoading: VideoEntry = {
 };
 
 const handlePress = () => {
-  Alert.alert("Entry Pressed", "This would navigate to the detail view");
+  console.log("Entry Pressed", "This would navigate to the detail view");
 };
 
 export const TextWithAnalysis: Story = {

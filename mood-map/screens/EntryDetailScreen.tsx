@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +14,7 @@ import { useEntryStore } from "@/stores/entryStore";
 import { EntryType } from "@/types/entry.types";
 import TextEntryDetail from "@/components/journal/TextEntryDetail";
 import VideoEntryDetail from "@/components/journal/VideoEntryDetail";
+import { useAlert } from "@/contexts/AlertContext";
 
 /**
  * EntryDetailScreen Component
@@ -35,16 +35,18 @@ const EntryDetailScreen: React.FC = () => {
 
   const { entries, deleteEntry } = useEntryStore();
   const [isDeleting, setIsDeleting] = useState(false);
+  const alert = useAlert();
 
   // Find the entry by ID
   const entry = entries.find((e) => e.id === entryId);
 
   // Handle delete with confirmation
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Entry",
-      "Are you sure you want to delete this entry? This action cannot be undone.",
-      [
+    alert.show({
+      title: "Delete Entry",
+      message:
+        "Are you sure you want to delete this entry? This action cannot be undone.",
+      buttons: [
         {
           text: "Cancel",
           style: "cancel",
@@ -60,12 +62,15 @@ const EntryDetailScreen: React.FC = () => {
               router.back();
             } catch (error) {
               setIsDeleting(false);
-              Alert.alert("Error", "Failed to delete entry. Please try again.");
+              alert.show({
+                title: "Error",
+                message: "Failed to delete entry. Please try again.",
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   // Handle back navigation

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
@@ -15,6 +14,7 @@ import {
   compressVideo,
   validateVideoFile,
 } from "@/utils/videoProcessing";
+import { useAlert } from "@/contexts/AlertContext";
 
 interface VideoRecorderProps {
   onRecordingComplete: (
@@ -43,6 +43,7 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [facing, setFacing] = useState<CameraType>("back");
   const [isProcessing, setIsProcessing] = useState(false);
+  const alert = useAlert();
 
   const cameraRef = useRef<CameraView>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -104,10 +105,10 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
       }
     } catch (error) {
       console.error("Error starting recording:", error);
-      Alert.alert(
-        "Recording Error",
-        "Failed to start recording. Please try again."
-      );
+      alert.show({
+        title: "Recording Error",
+        message: "Failed to start recording. Please try again.",
+      });
       resetRecording();
     }
   };
@@ -134,10 +135,10 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
       // Validate video file
       const validation = await validateVideoFile(videoUri);
       if (!validation.valid) {
-        Alert.alert(
-          "Invalid Video",
-          validation.error || "Video file is invalid"
-        );
+        alert.show({
+          title: "Invalid Video",
+          message: validation.error || "Video file is invalid",
+        });
         resetRecording();
         return;
       }
@@ -151,10 +152,10 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({
       onRecordingComplete(compressedUri, thumbnailUri, actualDuration);
     } catch (error) {
       console.error("Error processing video:", error);
-      Alert.alert(
-        "Processing Error",
-        "Failed to process video. Please try again."
-      );
+      alert.show({
+        title: "Processing Error",
+        message: "Failed to process video. Please try again.",
+      });
     } finally {
       setIsProcessing(false);
       resetRecording();

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
 import React from "react";
-import { View, Alert } from "react-native";
+import { View } from "react-native";
 import VideoRecorder from "./VideoRecorder";
 
 const meta = {
@@ -24,14 +24,14 @@ const handleRecordingComplete = (
   thumbnailUri: string,
   duration: number
 ) => {
-  Alert.alert(
+  console.log(
     "Recording Complete",
     `Video recorded successfully!\nDuration: ${duration}s\nURI: ${videoUri}`
   );
 };
 
 const handleCancel = () => {
-  Alert.alert("Cancelled", "Recording cancelled");
+  console.log("Cancelled", "Recording cancelled");
 };
 
 /**

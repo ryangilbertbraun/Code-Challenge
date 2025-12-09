@@ -6,12 +6,12 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { colors, typography, spacing } from "@/constants/theme";
 import { VideoEntry, AnalysisStatus } from "@/types/entry.types";
 import { useEntryStore } from "@/stores/entryStore";
+import { useAlert } from "@/contexts/AlertContext";
 
 interface VideoEntryDetailProps {
   entry: VideoEntry;
@@ -26,6 +26,7 @@ interface VideoEntryDetailProps {
 const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const { checkVideoAnalysis } = useEntryStore();
+  const alert = useAlert();
 
   const player = useVideoPlayer(entry.videoUrl, (player) => {
     player.pause();
@@ -171,11 +172,12 @@ const VideoEntryDetail: React.FC<VideoEntryDetailProps> = ({ entry }) => {
                 setIsCheckingStatus(false);
 
                 if (result) {
-                  Alert.alert(
-                    result.success ? "Status Update" : "Still Processing",
-                    result.message,
-                    [{ text: "OK" }]
-                  );
+                  alert.show({
+                    title: result.success
+                      ? "Status Update"
+                      : "Still Processing",
+                    message: result.message,
+                  });
                 }
               }}
               disabled={isCheckingStatus}
